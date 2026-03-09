@@ -1,0 +1,55 @@
+import express from 'express';
+import Order from '../models/Order.js';
+
+const router = express.Router();
+
+// GET /api/orders - List all orders
+router.get('/', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const filter = status ? { status } : {};
+    const orders = await Order.find(filter).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/orders/:id - Get single order
+router.get('/:id', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/orders - Create order (used by checkout)
+router.post('/', async (req, res) => {
+  try {
+    const count = await Order.countDocuments();
+    const orderNumber = `ORD-${String(count + 1).padStart(6, '0')}`;
+    const order = await Order.create({ ...req.body, orderNumber });
+    res.status(201).json(order);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/orders/:id - Update order (e.g. status)
+router.put('/:id', async (req, res) => {
+  try {
+    const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+export default router;

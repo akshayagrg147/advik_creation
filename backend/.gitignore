@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Environment (keep .env.example for reference)
+.env
+.env.local
+.env.*.local
+
+# Uploads (user-generated content, not source code)
+uploads/
+
+# Logs and OS
+*.log
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
