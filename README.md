@@ -1,12 +1,12 @@
 # Advik E-Commerce
 
-Full-stack e-commerce project for Advik Creation (Indian fashion wear).
+Full-stack e-commerce project for Advik Creation (Indian fashion wear). **Single repo** with backend, admin panel, and customer storefront.
 
 ## Project Structure
 
 - **backend** - Node.js + Express + MongoDB API
-- **advik-admin** - Admin panel for managing products
-- **stylejaipur-clone** - Customer-facing storefront
+- **advik-admin** - Admin panel for managing products (http://localhost:5173)
+- **stylejaipur-clone** - Customer-facing storefront (http://localhost:5174)
 
 ## Quick Start
 
@@ -55,3 +55,12 @@ npm run dev     # http://localhost:5173
 
 **Frontend** (`.env`):
 - `VITE_API_URL` - Backend API URL (default http://localhost:4000/api)
+
+## Push to GitHub (one repo)
+
+Create a new repo (e.g. `advik_creation` or `advik-ecom`) on GitHub, then:
+
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/REPO_NAME.git
+git push -u origin main
+```
