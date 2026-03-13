@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import sharp from 'sharp';
 
 const imageFilter = (req, file, cb) => {
   const allowed = /jpeg|jpg|png|gif|webp/i;
@@ -63,16 +64,53 @@ const s3Client = new S3Client({
 const getS3Url = (key) =>
   `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${key}`;
 
-const uploadToS3 = async (file, prefix) => {
+const compressImageBuffer = async (file) => {
+  // Convert to WebP with reasonable quality and max width
+  const image = sharp(file.buffer);
+  const metadata = await image.metadata();
+
+  const pipeline = image.rotate();
+
+  if (metadata.width && metadata.width > 1600) {
+    pipeline.resize(1600);
+  }
+
+  const outputBuffer = await pipeline.webp({ quality: 80 }).toBuffer();
+
+  return {
+    buffer: outputBuffer,
+    extension: '.webp',
+    contentType: 'image/webp',
+  };
+};
+
+const uploadToS3 = async (file, prefix, { compressImage = false } = {}) => {
   if (!file) throw new Error('No file provided');
-  const ext = path.extname(file.originalname) || '';
-  const key = `${prefix}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+
+  let body = file.buffer;
+  let ext = path.extname(file.originalname) || '';
+  let contentType = file.mimetype;
+
+  const isImage =
+    /^image\//.test(file.mimetype) ||
+    /\.(jpe?g|png|gif|webp)$/i.test(file.originalname);
+
+  if (compressImage && isImage) {
+    const compressed = await compressImageBuffer(file);
+    body = compressed.buffer;
+    ext = compressed.extension;
+    contentType = compressed.contentType;
+  }
+
+  const key = `${prefix}-${Date.now()}-${Math.round(
+    Math.random() * 1e9
+  )}${ext}`;
 
   const command = new PutObjectCommand({
     Bucket: s3Bucket,
     Key: key,
-    Body: file.buffer,
-    ContentType: file.mimetype,
+    Body: body,
+    ContentType: contentType,
   });
 
   await s3Client.send(command);
@@ -85,7 +123,9 @@ const uploadToS3 = async (file, prefix) => {
 router.post('/image', uploadImage.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const { url } = await uploadToS3(req.file, 'images/img');
+    const { url } = await uploadToS3(req.file, 'images/img', {
+      compressImage: true,
+    });
     res.json({ url });
   } catch (err) {
     console.error('S3 image upload error:', err);
@@ -111,7 +151,9 @@ router.post('/banner', uploadAny.single('file'), async (req, res) => {
     const videoExts = ['mp4', 'webm', 'mov', 'ogg'];
     const mediaType = videoExts.includes(ext) ? 'video' : 'image';
 
-    const { url } = await uploadToS3(req.file, 'banners/banner');
+    const { url } = await uploadToS3(req.file, 'banners/banner', {
+      compressImage: mediaType === 'image',
+    });
     res.json({
       url,
       mediaType,
@@ -128,7 +170,9 @@ router.post('/images', uploadImage.array('images', 10), async (req, res) => {
       return res.status(400).json({ error: 'No files uploaded' });
 
     const uploads = await Promise.all(
-      req.files.map((file) => uploadToS3(file, 'images/img'))
+      req.files.map((file) =>
+        uploadToS3(file, 'images/img', { compressImage: true })
+      )
     );
 
     const urls = uploads.map((u) => u.url);
