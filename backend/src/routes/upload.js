@@ -1,28 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const imageStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `img-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
-});
-
-const videoStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.mp4';
-    cb(null, `vid-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
-});
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const imageFilter = (req, file, cb) => {
   const allowed = /jpeg|jpg|png|gif|webp/i;
@@ -38,28 +17,23 @@ const videoFilter = (req, file, cb) => {
   else cb(new Error('Only videos allowed (mp4, webm, mov, ogg)'));
 };
 
+// Use in-memory storage; files are sent directly to S3
+const storage = multer.memoryStorage();
+
 const uploadImage = multer({
-  storage: imageStorage,
+  storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: imageFilter,
 });
 
 const uploadVideo = multer({
-  storage: videoStorage,
+  storage,
   limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: videoFilter,
 });
 
-const bannerStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `banner-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
-});
-
 const uploadAny = multer({
-  storage: bannerStorage,
+  storage,
   limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).slice(1).toLowerCase();
@@ -71,33 +45,98 @@ const uploadAny = multer({
 });
 
 const router = express.Router();
-const baseUrl = () => process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`;
 
-router.post('/image', uploadImage.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ url: `${baseUrl()}/uploads/${req.file.filename}` });
+const s3Region = process.env.AWS_REGION;
+const s3Bucket = process.env.AWS_S3_BUCKET;
+
+const s3Client = new S3Client({
+  region: s3Region,
+  credentials:
+    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      : undefined,
 });
 
-router.post('/video', uploadVideo.single('video'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ url: `${baseUrl()}/uploads/${req.file.filename}` });
-});
+const getS3Url = (key) =>
+  `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${key}`;
 
-router.post('/banner', uploadAny.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const ext = path.extname(req.file.originalname).slice(1).toLowerCase();
-  const videoExts = ['mp4', 'webm', 'mov', 'ogg'];
-  const mediaType = videoExts.includes(ext) ? 'video' : 'image';
-  res.json({
-    url: `${baseUrl()}/uploads/${req.file.filename}`,
-    mediaType,
+const uploadToS3 = async (file, prefix) => {
+  if (!file) throw new Error('No file provided');
+  const ext = path.extname(file.originalname) || '';
+  const key = `${prefix}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+
+  const command = new PutObjectCommand({
+    Bucket: s3Bucket,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
   });
+
+  await s3Client.send(command);
+  return {
+    key,
+    url: getS3Url(key),
+  };
+};
+
+router.post('/image', uploadImage.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { url } = await uploadToS3(req.file, 'images/img');
+    res.json({ url });
+  } catch (err) {
+    console.error('S3 image upload error:', err);
+    res.status(500).json({ error: 'Image upload failed' });
+  }
 });
 
-router.post('/images', uploadImage.array('images', 10), (req, res) => {
-  if (!req.files?.length) return res.status(400).json({ error: 'No files uploaded' });
-  const urls = req.files.map((f) => `${baseUrl()}/uploads/${f.filename}`);
-  res.json({ urls });
+router.post('/video', uploadVideo.single('video'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { url } = await uploadToS3(req.file, 'videos/vid');
+    res.json({ url });
+  } catch (err) {
+    console.error('S3 video upload error:', err);
+    res.status(500).json({ error: 'Video upload failed' });
+  }
+});
+
+router.post('/banner', uploadAny.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const ext = path.extname(req.file.originalname).slice(1).toLowerCase();
+    const videoExts = ['mp4', 'webm', 'mov', 'ogg'];
+    const mediaType = videoExts.includes(ext) ? 'video' : 'image';
+
+    const { url } = await uploadToS3(req.file, 'banners/banner');
+    res.json({
+      url,
+      mediaType,
+    });
+  } catch (err) {
+    console.error('S3 banner upload error:', err);
+    res.status(500).json({ error: 'Banner upload failed' });
+  }
+});
+
+router.post('/images', uploadImage.array('images', 10), async (req, res) => {
+  try {
+    if (!req.files?.length)
+      return res.status(400).json({ error: 'No files uploaded' });
+
+    const uploads = await Promise.all(
+      req.files.map((file) => uploadToS3(file, 'images/img'))
+    );
+
+    const urls = uploads.map((u) => u.url);
+    res.json({ urls });
+  } catch (err) {
+    console.error('S3 multiple image upload error:', err);
+    res.status(500).json({ error: 'Images upload failed' });
+  }
 });
 
 export default router;
