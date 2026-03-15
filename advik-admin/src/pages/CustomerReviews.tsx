@@ -172,13 +172,13 @@ const CustomerReviews = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Customer Reviews</h1>
-          <p className="text-gray-600 mt-1">Manage customer satisfaction reviews shown on the home page</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Customer Reviews</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage customer satisfaction reviews shown on the home page</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowSummaryModal(true)}
             className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 flex items-center gap-2"
@@ -197,9 +197,9 @@ const CustomerReviews = () => {
       </div>
 
       {/* Summary Card */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Review Summary (shown on storefront)</h2>
-        <div className="flex items-center gap-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Review Summary (shown on storefront)</h2>
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
             <StarIcon className="w-8 h-8 text-yellow-500 fill-yellow-500" />
             <span className="text-2xl font-bold">{summary.rating}</span>
@@ -225,9 +225,9 @@ const CustomerReviews = () => {
           reviews.map((review) => (
             <div
               key={review.id}
-              className="bg-white rounded-lg shadow p-4 flex gap-4 items-start"
+              className="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row gap-4 items-stretch sm:items-start"
             >
-              <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 self-start">
                 {review.image ? (
                   <img src={review.image} alt={review.name} className="w-full h-full object-cover" />
                 ) : (
@@ -269,9 +269,9 @@ const CustomerReviews = () => {
 
       {/* Add/Edit Review Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">{editingReview ? 'Edit Review' : 'Add Review'}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">{editingReview ? 'Edit Review' : 'Add Review'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
@@ -364,8 +364,8 @@ const CustomerReviews = () => {
 
       {/* Summary Edit Modal */}
       {showSummaryModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">Edit Review Summary</h2>
             <p className="text-gray-600 text-sm mb-4">
               This appears as the overall rating and total review count on the customer home page.

@@ -299,15 +299,15 @@ const Products = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Products</h1>
-          <p className="text-gray-600 mt-1">Manage your product catalog (from backend)</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Products</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage your product catalog (from backend)</p>
         </div>
         <button
           onClick={handleAdd}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           <PlusIcon className="w-5 h-5" />
           Add Product
@@ -323,13 +323,13 @@ const Products = () => {
             placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-base"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setCategoryFilter('all')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm ${
               categoryFilter === 'all' ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
@@ -337,7 +337,7 @@ const Products = () => {
           </button>
           <button
             onClick={() => setCategoryFilter('new-arrivals')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm ${
               categoryFilter === 'new-arrivals' ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
@@ -345,7 +345,7 @@ const Products = () => {
           </button>
           <button
             onClick={() => setCategoryFilter('best-sellers')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm ${
               categoryFilter === 'best-sellers' ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
@@ -353,52 +353,52 @@ const Products = () => {
           </button>
           <button
             onClick={() => setCategoryFilter('unstitched')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm ${
               categoryFilter === 'unstitched' ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            Unstitched Collections
+            Unstitched
           </button>
         </div>
       </div>
 
-      {/* Products Table */}
+      {/* Products: table on md+, cards on mobile */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sizes</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Labels</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sizes</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Labels</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded" />
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900 max-w-[180px] truncate">{product.name}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{product.category}</td>
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">
                     {product.sizes?.join(', ') || '—'}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     <div className="flex gap-1 flex-wrap">
                       {product.newArrival && (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-800">New Arrival</span>
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-800">New</span>
                       )}
                       {product.bestSeller && (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800">Best Seller</span>
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800">Best</span>
                       )}
                       {(product as Product & { unstitchedCollection?: boolean }).unstitchedCollection && (
                         <span className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-100 text-purple-800">Unstitched</span>
@@ -408,11 +408,11 @@ const Products = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">₹{product.price.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">₹{product.price.toLocaleString()}</td>
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">
                     {(product as Product & { stockQuantity?: number }).stockQuantity ?? 0}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         product.inStock
@@ -423,7 +423,7 @@ const Products = () => {
                       {product.inStock ? 'In Stock' : 'Out of Stock'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(product)}
@@ -444,17 +444,42 @@ const Products = () => {
             </tbody>
           </table>
         </div>
+        <div className="md:hidden divide-y divide-gray-100">
+          {filteredProducts.map((product) => (
+            <div key={product.id} className="p-4 flex gap-3">
+              <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                <p className="text-xs text-gray-500">{product.category}</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {product.newArrival && <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-100 text-blue-800">New</span>}
+                  {product.bestSeller && <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-800">Best</span>}
+                  {(product as Product & { unstitchedCollection?: boolean }).unstitchedCollection && <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-purple-100 text-purple-800">Unstitched</span>}
+                </div>
+                <p className="text-sm font-semibold text-gray-800 mt-1">₹{product.price.toLocaleString()}</p>
+              </div>
+              <div className="flex flex-col gap-2 justify-center">
+                <button onClick={() => handleEdit(product)} className="p-2 text-blue-600">
+                  <PencilIcon className="w-5 h-5" />
+                </button>
+                <button onClick={() => handleDelete(product.id)} className="p-2 text-red-600">
+                  <TrashIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">
               {editingProduct ? 'Edit Product' : 'Add Product'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input
@@ -486,7 +511,7 @@ const Products = () => {
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                   <input

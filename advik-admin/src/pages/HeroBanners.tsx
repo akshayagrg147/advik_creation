@@ -192,44 +192,44 @@ const HeroBanners = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Hero Banners</h1>
-          <p className="text-gray-600 mt-1">Manage home page hero slides (images & videos)</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Hero Banners</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage home page hero slides (images & videos)</p>
         </div>
         <button
           onClick={handleAdd}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           <PlusIcon className="w-5 h-5" />
           Add Banner
         </button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className="bg-white rounded-lg shadow p-4 flex gap-4 items-center"
+            className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center"
           >
-            <div className="flex flex-col gap-1">
+            <div className="flex sm:flex-col gap-1 flex-row items-center">
               <button
                 onClick={() => handleMove(index, 'up')}
                 disabled={index === 0}
-                className="p-1 text-gray-500 hover:text-gray-800 disabled:opacity-30"
+                className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30"
               >
                 <ArrowUpIcon className="w-5 h-5" />
               </button>
               <button
                 onClick={() => handleMove(index, 'down')}
                 disabled={index === slides.length - 1}
-                className="p-1 text-gray-500 hover:text-gray-800 disabled:opacity-30"
+                className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30"
               >
                 <ArrowDownIcon className="w-5 h-5" />
               </button>
             </div>
-            <div className="w-32 h-20 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+            <div className="w-full sm:w-32 h-32 sm:h-20 rounded overflow-hidden bg-gray-100 flex-shrink-0">
               {slide.mediaType === 'video' ? (
                 <video src={slide.mediaUrl || slide.image} className="w-full h-full object-cover" muted />
               ) : (
@@ -241,7 +241,7 @@ const HeroBanners = () => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-200">
                   {slide.mediaType === 'video' ? 'Video' : 'Image'}
                 </span>
@@ -249,10 +249,10 @@ const HeroBanners = () => {
                   <span className="text-xs px-2 py-0.5 rounded bg-yellow-100">Inactive</span>
                 )}
               </div>
-              <p className="font-semibold text-gray-800 truncate">{slide.title || 'Untitled'}</p>
-              <p className="text-sm text-gray-500 truncate">{slide.subtitle}</p>
+              <p className="font-semibold text-gray-800 truncate text-sm sm:text-base">{slide.title || 'Untitled'}</p>
+              <p className="text-xs sm:text-sm text-gray-500 truncate">{slide.subtitle}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-end sm:justify-start">
               <button
                 onClick={() => toggleActive(slide)}
                 className="p-2 text-gray-600 hover:text-gray-800"
@@ -272,13 +272,13 @@ const HeroBanners = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">{editingSlide ? 'Edit Banner' : 'Add Banner'}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">{editingSlide ? 'Edit Banner' : 'Add Banner'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Media (Image or Video)</label>
-                <div className="flex gap-4 items-center">
+                <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
                   <label className="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-red-500 hover:bg-red-50 transition">
                     <input
                       type="file"
@@ -332,7 +332,7 @@ const HeroBanners = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                   <input
@@ -355,7 +355,7 @@ const HeroBanners = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
                   <input
@@ -378,7 +378,7 @@ const HeroBanners = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Overlay Opacity (0-1)</label>
                   <input

@@ -21,11 +21,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Advik Creation</h1>
-          <p className="text-gray-600">Admin Panel</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100 p-4">
+      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-md mx-auto">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Advik Creation</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Admin Panel</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -73,7 +73,7 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-xs sm:text-sm text-gray-500">
           <p>Demo Credentials:</p>
           <p>Username: <strong>admin</strong></p>
           <p>Password: <strong>admin123</strong></p>

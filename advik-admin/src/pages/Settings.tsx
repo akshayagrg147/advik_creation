@@ -40,14 +40,14 @@ const Settings = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your store settings</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Settings</h1>
+        <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage your store settings</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
           <Cog6ToothIcon className="w-6 h-6 text-gray-600" />
           <h2 className="text-xl font-bold text-gray-800">General Settings</h2>
         </div>
@@ -85,8 +85,8 @@ const Settings = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">E-commerce Settings</h2>
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">E-commerce Settings</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
@@ -133,12 +133,12 @@ const Settings = () => {
             />
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cash on Delivery (COD)</label>
               <p className="text-sm text-gray-500">Allow customers to pay when they receive the order</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
               <input
                 type="checkbox"
                 checked={settings.codEnabled}

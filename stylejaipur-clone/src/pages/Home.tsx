@@ -132,22 +132,25 @@ const Home = () => {
   }
 
   return (
-    <div>
-      {/* Hero Banner Slideshow */}
+    <div className="home-3d">
+      {/* Hero Banner Slideshow – parallax + 3D depth */}
       <HeroSlideshow slides={heroSlides} autoPlayInterval={5000} />
 
       {/* Find Your Fit Section */}
       <AnimatedSection animationType="fade-up" delay={100}>
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">FIND YOUR FIT</h2>
-            <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+              FIND YOUR FIT
+            </h2>
+            {/* Single horizontal row, scrollable on mobile */}
+            <div className="flex gap-4 md:gap-8 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:justify-center">
               {findYourFitCategories.map((item, index) => (
                 <AnimatedSection
                   key={index}
                   animationType="scale"
                   delay={index * 100}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center shrink-0"
                 >
                   <button
                     onClick={(e) =>
@@ -157,7 +160,7 @@ const Home = () => {
                     className="flex flex-col items-center group cursor-pointer disabled:opacity-70"
                   >
                     <div
-                      className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-purple-900 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-110 mb-3 animate-float"
+                      className="tilt-3d-hover w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-purple-900 shadow-lg hover:shadow-xl mb-3 animate-float"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <img
@@ -192,7 +195,7 @@ const Home = () => {
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-gray-800 mb-8">WATCH AND SHOP</h2>
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto section-3d">
               <div className="aspect-video rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]">
                 <img
                   src="https://stylejaipur.com/cdn/shop/files/style_jaipur_banner.png?v=1719834320"

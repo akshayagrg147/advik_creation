@@ -23,10 +23,29 @@ interface HeroSlideshowProps {
 const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [parallaxY, setParallaxY] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const height = sectionRef.current.offsetHeight;
+      if (rect.top < height) {
+        const move = (height - rect.top) * 0.15;
+        setParallaxY(Math.min(move, height * 0.2));
+      } else {
+        setParallaxY(0);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     if (isPaused || slides.length <= 1) return;
@@ -67,19 +86,25 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
 
   return (
     <section
-      className="relative h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden"
+      ref={sectionRef}
+      className="hero-3d relative h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden"
+      style={{ perspective: '1400px' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full preserve-3d">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
             className={`absolute inset-0 transition-opacity duration-1000 ${
               index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
             }`}
+            style={{ transformStyle: 'preserve-3d' }}
           >
-            <div className="absolute inset-0">
+            <div
+              className="absolute inset-0 hero-slide-layer"
+              style={{ transform: `translate3d(0, ${parallaxY}px, 0) scale(1.05)` }}
+            >
               {isVideo(slide) ? (
                 <video
                   src={mediaUrl(slide)}
@@ -109,8 +134,11 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
         ))}
       </div>
 
-      {/* Single content block for current slide – GSAP animates these refs */}
-      <div className="container mx-auto px-4 absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+      {/* Single content block for current slide – GSAP animates these refs; slight translateZ for 3D pop */}
+      <div
+        className="container mx-auto px-4 absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+        style={{ transform: 'translateZ(40px)', perspective: '1400px' }}
+      >
         <div className="text-center text-white pointer-events-auto">
           {currentSlide?.title && (
             <h1

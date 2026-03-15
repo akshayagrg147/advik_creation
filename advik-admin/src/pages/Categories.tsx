@@ -57,15 +57,15 @@ const Categories = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Categories</h1>
-          <p className="text-gray-600 mt-1">Manage product categories</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Categories</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage product categories</p>
         </div>
         <button
           onClick={handleAdd}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           <PlusIcon className="w-5 h-5" />
           Add Category
@@ -119,8 +119,8 @@ const Categories = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">
               {editingCategory ? 'Edit Category' : 'Add Category'}
             </h2>

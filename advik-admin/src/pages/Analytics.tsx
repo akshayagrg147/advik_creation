@@ -20,16 +20,16 @@ const Analytics = () => {
   const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">Analytics</h1>
-        <p className="text-gray-600 mt-1">Track your store performance</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Analytics</h1>
+        <p className="text-gray-600 mt-1 text-sm sm:text-base">Track your store performance</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Sales Trend</h2>
-          <ResponsiveContainer width="100%" height={300}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Sales Trend</h2>
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -41,9 +41,9 @@ const Analytics = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Orders Trend</h2>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Orders Trend</h2>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -55,9 +55,9 @@ const Analytics = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Sales by Category</h2>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Sales by Category</h2>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
                 data={categoryData}

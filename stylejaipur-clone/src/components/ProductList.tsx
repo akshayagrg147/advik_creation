@@ -1,5 +1,6 @@
 import type { Product } from '../types';
 import ProductCard from './ProductCard';
+import TiltCard from './TiltCard';
 
 interface ProductListProps {
   products: Product[];
@@ -14,7 +15,7 @@ const ProductList = ({ products, title, showViewAll = false, viewAllLink }: Prod
   }
 
   return (
-    <section className="py-12">
+    <section className="py-12 section-3d">
       <div className="container mx-auto px-4">
         {title && (
           <div className="flex justify-between items-center mb-8">
@@ -29,7 +30,7 @@ const ProductList = ({ products, title, showViewAll = false, viewAllLink }: Prod
             )}
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {products.map((product, index) => (
             <div
               key={product.id}
@@ -39,7 +40,9 @@ const ProductList = ({ products, title, showViewAll = false, viewAllLink }: Prod
                 animationFillMode: 'both',
               }}
             >
-              <ProductCard product={product} />
+              <TiltCard maxTilt={8} perspective={1200}>
+                <ProductCard product={product} />
+              </TiltCard>
             </div>
           ))}
         </div>
