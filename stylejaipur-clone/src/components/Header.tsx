@@ -97,19 +97,14 @@ const Header = () => {
             {/* Logo */}
             <Link
               to="/"
-              className="mx-auto flex shrink-0 items-center gap-2 md:mx-0 md:gap-3"
+              className="mx-auto flex shrink-0 items-center md:mx-0"
+              aria-label="Advik Creations home"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-950 text-sm font-semibold tracking-wide text-white shadow-sm">
-                AC
-              </span>
-              <span className="hidden leading-none sm:block">
-                <span className="block text-xl font-semibold tracking-wide text-gray-950 md:text-2xl">
-                  Advik Creation
-                </span>
-                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.22em] text-red-600">
-                  Indian Fashion Wear
-                </span>
-              </span>
+              <img
+                src="/images/advik-creations-logo.jpg"
+                alt="Advik Creations"
+                className="h-12 w-12 rounded-full object-cover shadow-sm ring-1 ring-gray-200 sm:h-14 sm:w-14"
+              />
             </Link>
 
             {/* Search Bar - desktop */}
