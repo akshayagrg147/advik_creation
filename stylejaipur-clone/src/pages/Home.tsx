@@ -17,6 +17,22 @@ import {
 import type { Product } from '../types';
 import type { HeroSlide, StoryItem } from '../api';
 
+const getNewArrivalFeatureScore = (product: Product) => {
+  const image = product.image.toLowerCase();
+  const subcategory = product.subcategory?.toLowerCase() || '';
+  let score = 0;
+
+  if ((product.images?.length || 0) > 1) score += 6;
+  if (product.rating || product.reviews) score += 4;
+  if (product.discount || product.originalPrice) score += 3;
+  if (image.includes('stylejaipur.com') || image.includes('cdn/shop/files')) score += 3;
+  if (image.includes('dsc_')) score += 2;
+  if (product.unstitchedCollection || subcategory.includes('unstitched') || subcategory.includes('fabric')) score -= 5;
+  if (!product.rating && !product.reviews && !product.discount) score -= 2;
+
+  return score;
+};
+
 const Home = () => {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
@@ -103,7 +119,12 @@ const Home = () => {
   };
 
   const coOrdProducts = bestSellers.filter((p) => p.subcategory === 'Co-Ord Set');
-  const watchProducts = [...newArrivals, ...bestSellers].slice(0, 3);
+  const featuredNewArrivals = newArrivals
+    .map((product, index) => ({ product, index, score: getNewArrivalFeatureScore(product) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 4)
+    .map(({ product }) => product);
+  const watchProducts = [...featuredNewArrivals, ...bestSellers].slice(0, 3);
 
   if (loading) {
     return (
@@ -198,8 +219,8 @@ const Home = () => {
       {/* New Arrivals */}
       <AnimatedSection animationType="fade-up" delay={100}>
         <ProductList
-          products={newArrivals}
-          title="NEW ARRIVAL"
+          products={featuredNewArrivals}
+          title="NEW ARRIVALS"
           showViewAll
           viewAllLink="/new-arrivals"
         />
