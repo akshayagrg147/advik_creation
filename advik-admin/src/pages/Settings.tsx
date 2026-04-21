@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { getSettings, updateSettings, type Settings } from '../api/settings';
+import { getSettings, updateSettings, type Settings as StoreSettings } from '../api/settings';
 
 const Settings = () => {
-  const [settings, setSettings] = useState<Settings>({
+  const [settings, setSettings] = useState<StoreSettings>({
     siteName: 'Advik Creation',
     siteEmail: 'order@advikcreation.com',
     sitePhone: '+91 9876543210',
@@ -23,7 +23,7 @@ const Settings = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (field: keyof Settings, value: string | boolean) => {
+  const handleChange = (field: keyof StoreSettings, value: string | boolean) => {
     setSettings({ ...settings, [field]: value });
   };
 
@@ -168,5 +168,4 @@ const Settings = () => {
 };
 
 export default Settings;
-
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import {
   HomeIcon,
   ShoppingBagIcon,
@@ -140,4 +140,3 @@ const Layout = ({ children }: LayoutProps) => {
 };
 
 export default Layout;
-

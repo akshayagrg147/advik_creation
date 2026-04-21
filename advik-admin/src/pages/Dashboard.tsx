@@ -117,7 +117,7 @@ const Dashboard = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(value: number) => `₹${Number(value).toLocaleString()}`} />
+              <Tooltip formatter={(value) => `₹${Number(value ?? 0).toLocaleString()}`} />
               <Legend />
               <Bar dataKey="revenue" fill="#16a34a" name="Revenue (₹)" />
             </BarChart>

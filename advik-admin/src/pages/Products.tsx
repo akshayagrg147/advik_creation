@@ -183,7 +183,8 @@ const Products = () => {
   const removeSize = (idx: number) => {
     const sizeToRemove = formData.sizes[idx];
     setFormData((prev) => {
-      const { [sizeToRemove]: _, ...rest } = prev.priceBySize;
+      const rest = { ...prev.priceBySize };
+      delete rest[sizeToRemove];
       return {
         ...prev,
         sizes: prev.sizes.filter((_, i) => i !== idx),

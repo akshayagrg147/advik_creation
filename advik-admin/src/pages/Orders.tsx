@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getOrders, updateOrderStatus } from '../api/orders';
 import type { Order } from '../types';
 
@@ -8,7 +8,7 @@ const Orders = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -19,11 +19,11 @@ const Orders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStatus]);
 
   useEffect(() => {
     fetchOrders();
-  }, [selectedStatus]);
+  }, [fetchOrders]);
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
