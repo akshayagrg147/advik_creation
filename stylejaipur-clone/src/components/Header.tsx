@@ -103,7 +103,7 @@ const Header = () => {
               <img
                 src="/images/advik-creations-logo.jpg"
                 alt="Advik Creations"
-                className="h-12 w-12 rounded-full object-cover shadow-sm ring-1 ring-gray-200 sm:h-14 sm:w-14"
+                className="h-14 w-14 rounded-full object-cover shadow-sm ring-1 ring-gray-200 sm:h-16 sm:w-16 md:h-[72px] md:w-[72px]"
               />
             </Link>
 

@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-white text-xl font-bold mb-4">Advik Creation</h3>
+            <h3 className="text-white text-xl font-bold mb-4">Advik Creations</h3>
             <p className="text-sm mb-4">
               Your one-stop destination for trendy and elegant Indian fashion wear.
             </p>
@@ -106,7 +106,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>© {year}, Advik Creation. All rights reserved.</p>
+          <p>© {year}, Advik Creations. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -114,4 +114,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

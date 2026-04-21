@@ -22,6 +22,25 @@ interface HeroSlideshowProps {
   autoPlayInterval?: number;
 }
 
+const getHeroProductScore = (product: Product) => {
+  const image = product.image.toLowerCase();
+  const name = product.name.toLowerCase();
+  const subcategory = product.subcategory?.toLowerCase() || '';
+  let score = 0;
+
+  if ((product.images?.length || 0) > 1) score += 8;
+  if (product.rating || product.reviews) score += 5;
+  if (product.discount || product.originalPrice) score += 3;
+  if (product.bestSeller) score += 3;
+  if (image.includes('stylejaipur.com') || image.includes('cdn/shop/files')) score += 3;
+  if (image.includes('dsc_')) score += 2;
+  if (product.unstitchedCollection || subcategory.includes('unstitched') || subcategory.includes('fabric')) score -= 6;
+  if (name.includes('summer cool')) score -= 8;
+  if (!product.rating && !product.reviews && !product.discount) score -= 3;
+
+  return score;
+};
+
 const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 }: HeroSlideshowProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -62,9 +81,13 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
   if (slides.length === 0) return null;
 
   const currentSlide = slides[currentIndex];
-  const heroProducts = featuredProducts.slice(0, 4);
+  const heroProducts = featuredProducts
+    .map((product, index) => ({ product, index, score: getHeroProductScore(product) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 4)
+    .map(({ product }) => product);
   const featuredProduct = heroProducts[0];
-  const heroTitle = 'Advik Creation';
+  const heroTitle = 'Advik Creations';
   const heroSubtitle =
     currentSlide?.subtitle || 'Fresh festive wear, polished everyday sets, and occasion-ready silhouettes.';
   const heroButtonText = currentSlide?.buttonText || 'Shop New Arrivals';
@@ -81,7 +104,7 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
       <div className="absolute inset-0 preserve-3d">
         <img
           src="/images/advik-hero-editorial.png"
-          alt="Advik Creation festive collection"
+          alt="Advik Creations festive collection"
           className="hero-slide-layer h-full w-full object-cover object-[58%_center] md:object-center"
           style={{ transform: `translate3d(0, ${-parallaxY}px, 0) scale(1.05)` }}
         />
@@ -122,7 +145,7 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
           <div className="mt-8 grid w-[calc(100vw-2rem)] max-w-none grid-cols-2 gap-2 text-white sm:grid-cols-3 sm:gap-3 md:w-full md:max-w-lg">
             {[
               ['4.7/5', 'Customer rating'],
-              ['11+', 'Curated styles'],
+              ['Fresh', 'Curated edits'],
               ['COD', 'Available'],
             ].map(([value, label], index) => (
               <div key={label} className={`min-w-0 rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur ${index === 2 ? 'hidden sm:block' : ''}`}>

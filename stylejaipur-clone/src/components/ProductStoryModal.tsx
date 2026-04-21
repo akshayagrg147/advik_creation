@@ -152,7 +152,7 @@ const ProductStoryModal = ({
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
               <img
                 src="https://stylejaipur.com/cdn/shop/files/Untitled_design_1_960da92b-5caf-4162-884c-f214ea0b45cf_x320.png?v=1720204689"
-                alt="Advik Creation"
+                alt="Advik Creations"
                 className="w-full h-full object-cover"
               />
             </div>

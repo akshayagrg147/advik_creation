@@ -129,6 +129,9 @@ const Home = () => {
   const featuredNewArrivals = curateHomeProducts(newArrivals);
   const featuredBestSellers = curateHomeProducts(bestSellers);
   const featuredUnstitchedCollections = curateHomeProducts(unstitchedCollections);
+  const visibleFindYourFitCategories = findYourFitCategories.filter(
+    (item) => !item.name.toLowerCase().includes("men's") && !item.category.toLowerCase().includes("men's")
+  );
   const watchProducts = [...featuredNewArrivals, ...featuredBestSellers].slice(0, 3);
 
   if (loading) {
@@ -190,7 +193,7 @@ const Home = () => {
             <h2 className="text-3xl font-semibold text-gray-950 md:text-4xl">Find Your Fit</h2>
           </div>
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:justify-center md:gap-6 md:px-0">
-            {findYourFitCategories.map((item, index) => (
+            {visibleFindYourFitCategories.map((item, index) => (
               <button
                 key={index}
                 onClick={(e) =>
@@ -256,7 +259,7 @@ const Home = () => {
                 type="button"
                 onClick={() => setIsCampaignVideoOpen(true)}
                 className="group relative min-h-[360px] overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-2xl shadow-black/30 md:min-h-[520px]"
-                aria-label="Play Advik Creation campaign film"
+                aria-label="Play Advik Creations campaign film"
               >
                 <video
                   src="/videos/watch-shop-campaign.webm"
