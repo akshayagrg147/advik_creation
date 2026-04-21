@@ -1,7 +1,9 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import {
   getAuth,
+  GoogleAuthProvider,
   RecaptchaVerifier,
+  signInWithPopup,
   signInWithPhoneNumber,
   type Auth,
   type ConfirmationResult,
@@ -59,3 +61,9 @@ const getRecaptchaVerifier = (containerId: string) => {
 
 export const sendPhoneOtp = (phone: string, recaptchaContainerId: string) =>
   signInWithPhoneNumber(getFirebaseAuth(), phone, getRecaptchaVerifier(recaptchaContainerId));
+
+export const signInWithGoogle = () => {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  return signInWithPopup(getFirebaseAuth(), provider);
+};

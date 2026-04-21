@@ -9,6 +9,7 @@ import AnimatedSection from '../components/AnimatedSection';
 import {
   isFirebasePhoneAuthConfigured,
   sendPhoneOtp,
+  signInWithGoogle,
   type PhoneConfirmationResult,
 } from '../lib/firebase';
 
@@ -45,7 +46,7 @@ const formatIndianPhone = (value: string) => `+91${normalizeIndianPhone(value)}`
 
 const Checkout = () => {
   const { cart, getCartTotal, clearCart } = useCart();
-  const { isAuthenticated, user, loginWithPhone } = useAuth();
+  const { isAuthenticated, user, login, loginWithPhone } = useAuth();
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,6 +60,7 @@ const Checkout = () => {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<PhoneConfirmationResult | null>(null);
@@ -72,10 +74,13 @@ const Checkout = () => {
     if (user?.email) {
       setForm((prev) => ({ ...prev, email: user.email || '' }));
     }
+    if (user?.name) {
+      setForm((prev) => ({ ...prev, fullName: prev.fullName || user.name || '' }));
+    }
     if (user?.phone) {
       setForm((prev) => ({ ...prev, phone: normalizeIndianPhone(user.phone || '') }));
     }
-  }, [user?.email, user?.phone]);
+  }, [user?.email, user?.name, user?.phone]);
 
   // When COD is disabled, force prepaid
   useEffect(() => {
@@ -129,6 +134,35 @@ const Checkout = () => {
       setLoginError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.');
     } finally {
       setSendingOtp(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (!isFirebasePhoneAuthConfigured()) {
+      setLoginError('Google sign in is not configured yet. Please add Firebase environment values.');
+      return;
+    }
+
+    setLoginError('');
+    setGoogleLoading(true);
+    try {
+      const credential = await signInWithGoogle();
+      const email = credential.user.email;
+
+      if (!email) {
+        setLoginError('This Google account does not have an email address.');
+        return;
+      }
+
+      const token = await credential.user.getIdToken();
+      login(email, token, {
+        name: credential.user.displayName,
+        photoURL: credential.user.photoURL,
+      });
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'Google sign in failed. Please try again.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -240,11 +274,29 @@ const Checkout = () => {
         <div className="max-w-md mx-auto">
           <AnimatedSection animationType="scale" delay={100}>
           <div className="bg-white border rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Verify your mobile number</h2>
-            <p className="text-gray-600 mb-6">Please sign in with your phone number to place an order. We&apos;ll send a verification code by SMS.</p>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Sign in to continue</h2>
+            <p className="text-gray-600 mb-6">Use Google for quick sign in, or verify your mobile number with an SMS code.</p>
 
             {!otpSent ? (
               <div className="space-y-4">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-800 transition hover:bg-gray-50 disabled:opacity-70"
+                >
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-red-600 ring-1 ring-gray-200">
+                    G
+                  </span>
+                  {googleLoading ? 'Connecting...' : 'Continue with Google'}
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <span className="h-px flex-1 bg-gray-200" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">or</span>
+                  <span className="h-px flex-1 bg-gray-200" />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mobile number</label>
                   <input

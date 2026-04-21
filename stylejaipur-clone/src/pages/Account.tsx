@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCustomerOrders } from '../api/orders';
 import { useAuth } from '../context/useAuth';
+import { isFirebasePhoneAuthConfigured, signInWithGoogle } from '../lib/firebase';
 import type { Order } from '../types';
 
 const getStatusClass = (status: Order['status']) => {
@@ -27,10 +28,12 @@ const formatDate = (value: string) =>
   }).format(new Date(value));
 
 const Account = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, login } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -51,6 +54,35 @@ const Account = () => {
     loadOrders();
   }, [isAuthenticated, user]);
 
+  const handleGoogleSignIn = async () => {
+    if (!isFirebasePhoneAuthConfigured()) {
+      setLoginError('Google sign in is not configured yet. Please add Firebase environment values.');
+      return;
+    }
+
+    setLoginError('');
+    setLoginLoading(true);
+    try {
+      const credential = await signInWithGoogle();
+      const email = credential.user.email;
+
+      if (!email) {
+        setLoginError('This Google account does not have an email address.');
+        return;
+      }
+
+      const token = await credential.user.getIdToken();
+      login(email, token, {
+        name: credential.user.displayName,
+        photoURL: credential.user.photoURL,
+      });
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'Google sign in failed. Please try again.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -61,17 +93,39 @@ const Account = () => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Your Account</h1>
-          <p className="mt-3 text-gray-600">Verify your mobile number during checkout to see your profile and past orders here.</p>
-          <Link
-            to="/"
-            className="mt-6 inline-flex rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700"
+          <p className="mt-3 text-gray-600">Sign in to see your profile and past orders here.</p>
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loginLoading}
+            className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:opacity-70 sm:w-auto"
           >
-            Start shopping
-          </Link>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-red-600 ring-1 ring-gray-200">
+              G
+            </span>
+            {loginLoading ? 'Connecting...' : 'Continue with Google'}
+          </button>
+          {loginError && <p className="mt-4 text-sm text-red-600">{loginError}</p>}
+          <div>
+            <Link
+              to="/"
+              className="mt-5 inline-flex rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              Start shopping
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
+
+  const profileLabel = user.name || user.phone || user.email || 'Advik customer';
+  const profileInitials = profileLabel
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -83,16 +137,28 @@ const Account = () => {
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside className="h-fit rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-950 text-lg font-bold text-white">
-              {(user.phone || user.email || 'A').slice(-2).replace(/\D/g, '') || 'AC'}
-            </div>
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={profileLabel}
+                className="h-14 w-14 rounded-full object-cover ring-1 ring-gray-200"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-950 text-lg font-bold text-white">
+                {profileInitials || 'AC'}
+              </div>
+            )}
             <div className="min-w-0">
-              <h2 className="font-semibold text-gray-950">Advik customer</h2>
+              <h2 className="truncate font-semibold text-gray-950">{profileLabel}</h2>
               <p className="truncate text-sm text-gray-500">{user.phone || user.email}</p>
             </div>
           </div>
 
           <div className="mt-6 space-y-4 border-t border-gray-100 pt-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Name</p>
+              <p className="mt-1 font-medium text-gray-900">{user.name || 'Advik customer'}</p>
+            </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Mobile</p>
               <p className="mt-1 font-medium text-gray-900">{user.phone || 'Not added'}</p>
@@ -112,7 +178,7 @@ const Account = () => {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-gray-950">Past orders</h2>
-              <p className="text-sm text-gray-500">Full order details linked to your verified phone number.</p>
+              <p className="text-sm text-gray-500">Full order details linked to your signed-in phone or email.</p>
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { AuthContext, type CustomerUser } from './authContextValue';
+import { AuthContext, type CustomerProfile, type CustomerUser } from './authContextValue';
 
 function getStoredUser(): CustomerUser | null {
   try {
@@ -14,8 +14,13 @@ function getStoredUser(): CustomerUser | null {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<CustomerUser | null>(getStoredUser);
 
-  const login = (email: string, token: string) => {
-    const u = { email, token };
+  const login = (email: string, token: string, profile?: CustomerProfile) => {
+    const u = {
+      email,
+      token,
+      name: profile?.name || undefined,
+      photoURL: profile?.photoURL || undefined,
+    };
     setUser(u);
     localStorage.setItem('customerAuth', JSON.stringify(u));
   };
