@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/useCart';
+import { useAuth } from '../context/useAuth';
 import { getCheckoutSettings } from '../api/settings';
 import { getProductPrice } from '../utils/price';
 import { sendOtp, verifyOtp } from '../api/auth';

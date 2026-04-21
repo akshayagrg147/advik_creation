@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import type { Product } from '../types';
 import { getProductPrice } from '../utils/price';
 import type { StoryItem } from '../api';
@@ -43,6 +43,20 @@ function toSlides(products?: Product[], storyItems?: StoryItem[]): StorySlide[] 
   return [];
 }
 
+function createReactionState(slides: StorySlide[]) {
+  const likes: Record<string, number> = {};
+  const liked: Record<string, boolean> = {};
+
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i];
+    const id = slide.type === 'product' && slide.product ? (slide.product.id || `product-${i}`) : `media-${i}`;
+    likes[id] = Math.floor(Math.random() * 50) + 10;
+    liked[id] = false;
+  }
+
+  return { likes, liked };
+}
+
 const ProductStoryModal = ({
   isOpen,
   onClose,
@@ -52,35 +66,15 @@ const ProductStoryModal = ({
   initialIndex = 0,
 }: ProductStoryModalProps) => {
   const slides = useMemo(() => toSlides(products, storyItems), [products, storyItems]);
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const safeInitialIndex = slides.length > 0 ? Math.min(initialIndex, slides.length - 1) : 0;
+  const initialReactions = useMemo(() => createReactionState(slides), [slides]);
+  const [currentIndex, setCurrentIndex] = useState(safeInitialIndex);
   const [selectedSize, setSelectedSize] = useState<string>('');
-  const [likes, setLikes] = useState<Record<string, number>>({});
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [likes, setLikes] = useState<Record<string, number>>(initialReactions.likes);
+  const [liked, setLiked] = useState<Record<string, boolean>>(initialReactions.liked);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const { addToCart } = useCart();
-
-  useEffect(() => {
-    if (!isOpen || slides.length === 0) return;
-    const idx = Math.min(initialIndex, slides.length - 1);
-    setCurrentIndex(idx);
-    const slide = slides[idx];
-    if (slide?.type === 'product' && slide.product?.sizes?.length) {
-      setSelectedSize(slide.product.sizes[0]);
-    } else {
-      setSelectedSize('');
-    }
-    const init: Record<string, number> = {};
-    const initL: Record<string, boolean> = {};
-    for (let i = 0; i < slides.length; i++) {
-      const s = slides[i];
-      const id = s.type === 'product' && s.product ? (s.product.id || `product-${i}`) : `media-${i}`;
-      init[id] = Math.floor(Math.random() * 50) + 10;
-      initL[id] = false;
-    }
-    setLikes(init);
-    setLiked(initL);
-  }, [isOpen, initialIndex, slides]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -123,26 +117,19 @@ const ProductStoryModal = ({
     if (current.type === 'product' && current.product) {
       const p = current.product;
       const unstitchedNoSizes = (p as Product & { unstitchedCollection?: boolean }).unstitchedCollection && (!p.sizes || p.sizes.length === 0);
-      const size = unstitchedNoSizes ? 'Unstitched' : (selectedSize || p.sizes?.[0]);
-      if (size) {
-        addToCart(p, size);
+      if (unstitchedNoSizes) {
+        addToCart(p, 'Unstitched');
+      } else if (effectiveSelectedSize) {
+        addToCart(p, effectiveSelectedSize);
       }
     }
   };
 
-  // Reset selected size when slide changes
-  useEffect(() => {
-    if (slides.length === 0) return;
-    const idx = Math.min(Math.max(0, currentIndex), slides.length - 1);
-    const slide = slides[idx];
-    if (slide?.type === 'product' && slide.product?.sizes?.length) {
-      setSelectedSize((prev) => (slide.product.sizes.includes(prev) ? prev : slide.product.sizes[0]));
-    }
-  }, [currentIndex, slides]);
-
   const prod = current.type === 'product' ? current.product : null;
   const isUnstitchedNoSizes = prod && (prod as Product & { unstitchedCollection?: boolean }).unstitchedCollection && (!prod.sizes || prod.sizes.length === 0);
-  const canAddToCart = current.type === 'product' && prod && (isUnstitchedNoSizes || (prod.sizes?.length && (selectedSize || prod.sizes[0])));
+  const effectiveSelectedSize =
+    prod?.sizes?.find((size) => size === selectedSize) || prod?.sizes?.[0] || '';
+  const canAddToCart = current.type === 'product' && prod && (isUnstitchedNoSizes || effectiveSelectedSize);
   const productVideo = current.type === 'product' && prod ? (prod as Product & { video?: string }).video : undefined;
   const mediaUrl =
     current.type === 'product' && prod
@@ -262,7 +249,7 @@ const ProductStoryModal = ({
                 <>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-white text-gray-900 px-2 py-1 rounded font-bold text-sm">
-                      ₹{getProductPrice(prod, selectedSize || prod.sizes?.[0]).toLocaleString()}
+                      ₹{getProductPrice(prod, effectiveSelectedSize).toLocaleString()}
                     </span>
                     {prod.originalPrice && (
                       <span className="text-white/60 line-through text-sm">
@@ -272,7 +259,7 @@ const ProductStoryModal = ({
                   </div>
                   {prod.sizes && prod.sizes.length > 1 && !isUnstitchedNoSizes && (
                     <select
-                      value={selectedSize || prod.sizes[0] || ''}
+                      value={effectiveSelectedSize}
                       onChange={(e) => setSelectedSize(e.target.value)}
                       className="w-full mb-2 px-3 py-2 bg-white/10 text-white border border-white/30 rounded-lg text-sm"
                     >

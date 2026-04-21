@@ -1,19 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
-
-interface CustomerUser {
-  email: string;
-  token: string;
-}
-
-interface AuthContextType {
-  user: CustomerUser | null;
-  isAuthenticated: boolean;
-  login: (email: string, token: string) => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext, type CustomerUser } from './authContextValue';
 
 function getStoredUser(): CustomerUser | null {
   try {
@@ -50,12 +37,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
 };

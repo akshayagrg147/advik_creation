@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import { getProductPrice } from '../utils/price';
 import { searchProducts } from '../api';
 import type { Product } from '../types';
@@ -9,7 +9,6 @@ const navLinks = [
   { label: 'New Arrivals', to: '/new-arrivals' },
   { label: 'Best Sellers', to: '/best-sellers' },
   { label: "Women's Wear", to: '/womens-wear' },
-  { label: "Men's Wear", to: '/mens-wear' },
   { label: 'Unstitched', to: '/unstitched-collections' },
 ];
 
@@ -52,10 +51,10 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur">
       {/* Top Banner */}
-      <div className="bg-red-600 text-white text-center py-2 text-xs sm:text-sm">
-        <p>
-          Special Offers: Extra 5% Off On Prepaid Order&nbsp;|&nbsp;Buy 2 and Get
-          10% Off&nbsp;|&nbsp;Buy 3 and Get 15% Off
+      <div className="bg-red-600 py-2 text-center text-xs text-white sm:text-sm">
+        <p className="mx-auto max-w-5xl px-4 leading-snug">
+          <span className="sm:hidden">Extra 5% prepaid today</span>
+          <span className="hidden sm:inline">Extra 5% prepaid | Buy 2 get 10% | Buy 3 get 15%</span>
         </p>
       </div>
 
@@ -98,15 +97,18 @@ const Header = () => {
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-2 md:gap-3 shrink-0 mx-auto md:mx-0"
+              className="mx-auto flex shrink-0 items-center gap-2 md:mx-0 md:gap-3"
             >
-              <img
-                src="https://stylejaipur.com/cdn/shop/files/Untitled_design_1_960da92b-5caf-4162-884c-f214ea0b45cf_x320.png?v=1720204689"
-                alt="Advik Creation Logo"
-                className="h-8 w-auto md:h-10"
-              />
-              <span className="hidden sm:inline-block text-xl md:text-2xl font-semibold tracking-wide text-gray-900">
-                Advik Creation
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-950 text-sm font-semibold tracking-wide text-white shadow-sm">
+                AC
+              </span>
+              <span className="hidden leading-none sm:block">
+                <span className="block text-xl font-semibold tracking-wide text-gray-950 md:text-2xl">
+                  Advik Creation
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.22em] text-red-600">
+                  Indian Fashion Wear
+                </span>
               </span>
             </Link>
 
@@ -481,4 +483,3 @@ const Header = () => {
 };
 
 export default Header;
-

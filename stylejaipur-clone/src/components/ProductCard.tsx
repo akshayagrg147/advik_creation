@@ -1,50 +1,66 @@
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
 import { getProductPrice } from '../utils/price';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import { useState } from 'react';
 
 interface ProductCardProps {
   product: Product;
+  variant?: 'default' | 'premium';
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, variant = 'default' }: ProductCardProps) => {
   const { addToCart } = useCart();
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const defaultSize =
+    product.sizes?.[0] ||
+    (product.unstitchedCollection ? 'Unstitched' : 'Free Size');
+  const availableSizes = product.sizes?.length ? product.sizes : [defaultSize];
+  const [selectedSize, setSelectedSize] = useState(defaultSize);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
+  const isPremium = variant === 'premium';
 
   const handleAddToCart = () => {
-    if (selectedSize) {
-      addToCart(product, selectedSize);
-      setShowSizeSelector(false);
-    }
+    const size = selectedSize || defaultSize;
+    addToCart(product, size);
+    setShowSizeSelector(false);
+  };
+
+  const handleQuickAdd = () => {
+    addToCart(product, selectedSize || defaultSize);
+  };
+
+  const handleSelectSize = (size: string) => {
+    setSelectedSize(size);
   };
 
   return (
-    <div className="group relative bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col h-full">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <Link to={`/product/${product.id}`} className="block">
-        <div className="relative overflow-hidden bg-gray-50">
+        <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-64 sm:h-72 lg:h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.style.opacity = '0';
+            }}
+            className={`w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+              isPremium ? 'h-72 object-top sm:h-80 lg:h-[360px]' : 'h-64 sm:h-72 lg:h-80'
+            }`}
           />
-          {/* Left: discount and best seller stacked so they never overlap */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.discount && (
-              <span className="bg-red-600 text-white px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded shadow-sm">
-                {product.discount}% OFF
+          <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5">
+            {product.bestSeller && (
+              <span className="rounded-full bg-white/92 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-950 shadow-sm backdrop-blur">
+                Most loved
               </span>
             )}
-            {product.bestSeller && (
-              <span className="bg-amber-500 text-white px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded shadow-sm">
-                BEST SELLER
+            {product.discount && (
+              <span className="rounded-full bg-red-600/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur">
+                Save {product.discount}%
               </span>
             )}
           </div>
-          {/* Right: new arrival only */}
           {product.newArrival && (
-            <span className="absolute top-2 right-2 bg-green-600 text-white px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded shadow-sm">
+            <span className="absolute right-3 top-3 rounded-full bg-emerald-700/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur">
               NEW
             </span>
           )}
@@ -52,30 +68,28 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </Link>
 
-      <div className="p-4 flex-1 flex flex-col">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         <Link to={`/product/${product.id}`}>
-          <h3 className="font-semibold text-gray-900 mb-1.5 line-clamp-2 hover:text-red-600 transition text-sm sm:text-base">
+          <h3 className="mb-2 line-clamp-2 text-sm font-semibold leading-6 text-gray-950 transition hover:text-red-600 sm:text-[17px]">
             {product.name}
           </h3>
         </Link>
 
         {product.rating && (
-          <div className="flex items-center gap-1.5 mb-1.5 text-xs text-gray-600">
-            <span className="text-yellow-400">⭐</span>
-            <span>
-              {product.rating}{' '}
-              {product.reviews && <span className="text-gray-400">({product.reviews})</span>}
-            </span>
+          <div className="mb-3 flex items-center gap-2 text-xs text-gray-600">
+            <span className="text-amber-400">★</span>
+            <span className="font-medium text-gray-700">{product.rating}</span>
+            {product.reviews && <span className="text-gray-400">({product.reviews} reviews)</span>}
           </div>
         )}
 
-        <div className="mb-2 space-y-0.5">
-          <span className="block text-lg font-semibold text-gray-900">
+        <div className="mb-4 flex items-end gap-2">
+          <span className="text-xl font-semibold text-gray-950">
             Rs. {getProductPrice(product, selectedSize).toLocaleString()}
           </span>
           {product.originalPrice && (
-            <span className="block text-[11px] text-gray-400">
-              MRP&nbsp;Rs. {product.originalPrice.toLocaleString()}
+            <span className="pb-0.5 text-xs text-gray-400 line-through">
+              Rs. {product.originalPrice.toLocaleString()}
             </span>
           )}
         </div>
@@ -83,11 +97,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {showSizeSelector ? (
           <div className="mt-auto space-y-2">
             <div className="flex flex-wrap gap-1.5">
-              {product.sizes.map((size) => (
+              {availableSizes.map((size) => (
                 <button
+                  type="button"
                   key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`px-3 py-1 text-[11px] rounded-full border transition ${
+                  onClick={() => handleSelectSize(size)}
+                  className={`rounded-md border px-3 py-1 text-[11px] transition ${
                     selectedSize === size
                       ? 'bg-red-600 text-white border-red-600'
                       : 'bg-white text-gray-700 border-gray-300 hover:border-red-600 hover:text-red-600'
@@ -98,12 +113,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
               ))}
             </div>
             <button
+              type="button"
               onClick={handleAddToCart}
-              className="w-full bg-red-600 text-white py-2 rounded-full hover:bg-red-700 transition font-medium text-sm"
+              className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
             >
               Add to Cart
             </button>
             <button
+              type="button"
               onClick={() => setShowSizeSelector(false)}
               className="w-full text-gray-500 py-1.5 text-xs hover:text-gray-800"
             >
@@ -111,12 +128,24 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => setShowSizeSelector(true)}
-            className="mt-auto w-full bg-gray-100 text-gray-900 py-2 rounded-full hover:bg-gray-200 transition font-medium text-sm"
-          >
-            Quick Add
-          </button>
+          <div className="mt-auto grid grid-cols-[1fr_auto] gap-2">
+            <button
+              type="button"
+              onClick={handleQuickAdd}
+              className="rounded-lg bg-gray-950 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
+            >
+              Quick Add
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSizeSelector(true)}
+              className="rounded-lg border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-red-600 hover:text-red-600"
+              aria-label="Choose size"
+              title="Choose size"
+            >
+              Size
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -124,4 +153,3 @@ const ProductCard = ({ product }: ProductCardProps) => {
 };
 
 export default ProductCard;
-

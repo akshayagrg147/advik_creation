@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import gsap from 'gsap';
+import type { Product } from '../types';
+import { getProductPrice } from '../utils/price';
 
 interface Slide {
   id: number | string;
@@ -17,18 +18,15 @@ interface Slide {
 
 interface HeroSlideshowProps {
   slides: Slide[];
+  featuredProducts?: Product[];
   autoPlayInterval?: number;
 }
 
-const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) => {
+const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 }: HeroSlideshowProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [parallaxY, setParallaxY] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
-
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const ctaRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const onScroll = () => {
@@ -36,8 +34,8 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
       const rect = sectionRef.current.getBoundingClientRect();
       const height = sectionRef.current.offsetHeight;
       if (rect.top < height) {
-        const move = (height - rect.top) * 0.15;
-        setParallaxY(Math.min(move, height * 0.2));
+        const move = (height - rect.top) * 0.05;
+        setParallaxY(Math.min(move, height * 0.08));
       } else {
         setParallaxY(0);
       }
@@ -55,23 +53,6 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
     return () => clearInterval(interval);
   }, [isPaused, slides.length, autoPlayInterval]);
 
-  // GSAP: animate hero content when slide changes
-  useEffect(() => {
-    const title = titleRef.current;
-    const subtitle = subtitleRef.current;
-    const cta = ctaRef.current;
-
-    const from = { y: 32, opacity: 0 };
-    const to = { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' };
-
-    const tl = gsap.timeline();
-    if (title) tl.fromTo(title, from, { ...to, duration: 0.6 }, 0);
-    if (subtitle) tl.fromTo(subtitle, from, { ...to, duration: 0.6, delay: 0.15 }, 0);
-    if (cta) tl.fromTo(cta, from, { ...to, duration: 0.5, delay: 0.3 }, 0);
-
-    return () => tl.kill();
-  }, [currentIndex]);
-
   const goToSlide = (index: number) => setCurrentIndex(index);
   const goToPrevious = () =>
     setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
@@ -80,86 +61,108 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
 
   if (slides.length === 0) return null;
 
-  const mediaUrl = (s: Slide) => s.mediaUrl || s.image || '';
-  const isVideo = (s: Slide) => s.mediaType === 'video';
   const currentSlide = slides[currentIndex];
+  const heroProducts = featuredProducts.slice(0, 4);
+  const featuredProduct = heroProducts[0];
+  const heroTitle = 'Advik Creation';
+  const heroSubtitle =
+    currentSlide?.subtitle || 'Fresh festive wear, polished everyday sets, and occasion-ready silhouettes.';
+  const heroButtonText = currentSlide?.buttonText || 'Shop New Arrivals';
+  const heroButtonLink = currentSlide?.buttonLink || '/new-arrivals';
 
   return (
     <section
       ref={sectionRef}
-      className="hero-3d relative h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden"
+      className="hero-3d relative min-h-[760px] overflow-hidden bg-[#111827] md:min-h-[600px]"
       style={{ perspective: '1400px' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative w-full h-full preserve-3d">
-        {slides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
-            style={{ transformStyle: 'preserve-3d' }}
-          >
-            <div
-              className="absolute inset-0 hero-slide-layer"
-              style={{ transform: `translate3d(0, ${parallaxY}px, 0) scale(1.05)` }}
-            >
-              {isVideo(slide) ? (
-                <video
-                  src={mediaUrl(slide)}
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-              ) : (
-                <img
-                  src={mediaUrl(slide)}
-                  alt={slide.title || `Slide ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              )}
-              <div
-                className={`absolute inset-0 bg-gradient-to-r ${
-                  slide.overlayColor || 'from-red-900/80 to-red-800/80'
-                }`}
-                style={{
-                  opacity: slide.overlayOpacity ?? 0.8,
-                }}
-              />
-            </div>
-          </div>
-        ))}
+      <div className="absolute inset-0 preserve-3d">
+        <img
+          src="/images/advik-hero-editorial.png"
+          alt="Advik Creation festive collection"
+          className="hero-slide-layer h-full w-full object-cover object-[58%_center] md:object-center"
+          style={{ transform: `translate3d(0, ${-parallaxY}px, 0) scale(1.05)` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/78 to-gray-950/8 md:via-gray-950/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950/45 via-transparent to-transparent" />
       </div>
 
-      {/* Single content block for current slide – GSAP animates these refs; slight translateZ for 3D pop */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_22%,rgba(16,185,129,0.22),transparent_30%),radial-gradient(circle_at_18%_80%,rgba(220,38,38,0.22),transparent_28%)]" />
+
       <div
-        className="container mx-auto px-4 absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+        className="container mx-auto absolute inset-0 z-10 flex flex-col justify-center gap-8 overflow-hidden px-4 py-8 md:grid md:grid-cols-[0.92fr_1.08fr] md:items-center lg:px-8"
         style={{ transform: 'translateZ(40px)', perspective: '1400px' }}
       >
-        <div className="text-center text-white pointer-events-auto">
-          {currentSlide?.title && (
-            <h1
-              ref={titleRef}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4"
-            >
-              {currentSlide.title}
-            </h1>
-          )}
-          {currentSlide?.subtitle && (
-            <p ref={subtitleRef} className="text-xl md:text-2xl mb-8">
-              {currentSlide.subtitle}
-            </p>
-          )}
-          {currentSlide?.buttonText && currentSlide?.buttonLink && (
+        <div className="w-[calc(100vw-2rem)] max-w-none text-white pointer-events-auto md:w-full md:max-w-xl">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/85 backdrop-blur">
+            Limited festive edit
+          </div>
+          <h1 className="max-w-[11ch] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            {heroTitle}
+          </h1>
+          <p className="mt-5 max-w-lg text-base leading-7 text-white/82 md:text-lg">
+            {heroSubtitle}
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
-              ref={ctaRef}
-              to={currentSlide.buttonLink}
-              className="inline-block bg-white text-red-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105"
+              to={heroButtonLink}
+              className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-semibold text-gray-950 shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:bg-gray-100"
             >
-              {currentSlide.buttonText}
+              {heroButtonText}
+            </Link>
+            <Link
+              to="/best-sellers"
+              className="inline-flex items-center justify-center rounded-lg border border-white/25 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
+            >
+              Best Sellers
+            </Link>
+          </div>
+          <div className="mt-8 grid w-[calc(100vw-2rem)] max-w-none grid-cols-2 gap-2 text-white sm:grid-cols-3 sm:gap-3 md:w-full md:max-w-lg">
+            {[
+              ['4.7/5', 'Customer rating'],
+              ['11+', 'Curated styles'],
+              ['COD', 'Available'],
+            ].map(([value, label], index) => (
+              <div key={label} className={`min-w-0 rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur ${index === 2 ? 'hidden sm:block' : ''}`}>
+                <div className="text-lg font-semibold sm:text-xl">{value}</div>
+                <div className="mt-1 truncate text-[9px] uppercase text-white/65 sm:text-[11px] sm:tracking-wide">{label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-7 grid w-[calc(100vw-2rem)] grid-cols-2 gap-2 md:hidden">
+            {heroProducts.slice(0, 2).map((product) => (
+              <Link
+                key={product.id}
+                to={`/product/${product.id}`}
+                className="min-w-0 h-36 overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-xl shadow-black/25"
+              >
+                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative hidden min-h-[520px] md:block">
+          {featuredProduct && (
+            <Link
+              to={`/product/${featuredProduct.id}`}
+              className="absolute bottom-8 right-0 w-80 rounded-lg border border-white/20 bg-white/95 p-3 text-gray-950 shadow-2xl shadow-black/30 backdrop-blur transition hover:-translate-y-1"
+            >
+              <div className="flex gap-3">
+                <img
+                  src={featuredProduct.image}
+                  alt={featuredProduct.name}
+                  className="h-20 w-16 rounded-md object-cover"
+                />
+                <div className="min-w-0">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-red-600">Editor pick</div>
+                  <div className="line-clamp-2 text-sm font-semibold leading-5">{featuredProduct.name}</div>
+                  <div className="mt-2 text-sm font-bold">Rs. {getProductPrice(featuredProduct, featuredProduct.sizes[0]).toLocaleString()}</div>
+                </div>
+              </div>
             </Link>
           )}
         </div>
@@ -169,7 +172,7 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all backdrop-blur-sm"
+            className="absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-white/15 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/25 md:block"
             aria-label="Previous slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +181,7 @@ const HeroSlideshow = ({ slides, autoPlayInterval = 5000 }: HeroSlideshowProps) 
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all backdrop-blur-sm"
+            className="absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-white/15 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/25 md:block"
             aria-label="Next slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

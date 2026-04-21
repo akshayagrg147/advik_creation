@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import { getProductPrice } from '../utils/price';
 import AnimatedSection from '../components/AnimatedSection';
 
@@ -140,4 +140,3 @@ const Cart = () => {
 };
 
 export default Cart;
-

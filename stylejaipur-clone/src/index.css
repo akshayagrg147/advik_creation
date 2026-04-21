@@ -15,7 +15,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #111827;
-  background-color: #F2F4F8;
+  background-color: #f6f7f9;
+}
+
+html,
+body,
+#root {
+  overflow-x: hidden;
 }
 
 @keyframes fade-in {

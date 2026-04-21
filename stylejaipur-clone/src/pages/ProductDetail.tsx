@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { getProductById } from '../api';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import { getProductPrice } from '../utils/price';
 import type { Product } from '../types';
 
@@ -55,7 +55,7 @@ const ProductDetail = () => {
       );
     }, contentRef.current ?? undefined);
     return () => ctx.revert();
-  }, [product?.id]);
+  }, [product]);
 
   if (loading) {
     return (
