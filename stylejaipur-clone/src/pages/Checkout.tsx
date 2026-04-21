@@ -4,8 +4,12 @@ import { useCart } from '../context/useCart';
 import { useAuth } from '../context/useAuth';
 import { getCheckoutSettings } from '../api/settings';
 import { getProductPrice } from '../utils/price';
-import { sendOtp, verifyOtp } from '../api/auth';
 import AnimatedSection from '../components/AnimatedSection';
+import {
+  isFirebasePhoneAuthConfigured,
+  sendPhoneOtp,
+  type PhoneConfirmationResult,
+} from '../lib/firebase';
 
 type PaymentMethod = 'prepaid' | 'cod';
 
@@ -35,9 +39,12 @@ const initialForm: FormData = {
   paymentMethod: 'prepaid',
 };
 
+const normalizeIndianPhone = (value: string) => value.replace(/\D/g, '').slice(-10);
+const formatIndianPhone = (value: string) => `+91${normalizeIndianPhone(value)}`;
+
 const Checkout = () => {
   const { cart, getCartTotal, clearCart } = useCart();
-  const { isAuthenticated, user, login, logout } = useAuth();
+  const { isAuthenticated, user, loginWithPhone, logout } = useAuth();
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,23 +52,27 @@ const Checkout = () => {
   const [codEnabled, setCodEnabled] = useState(true);
 
   // Login / OTP verification state
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPhone, setLoginPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<PhoneConfirmationResult | null>(null);
 
   useEffect(() => {
     getCheckoutSettings().then((s) => setCodEnabled(s.codEnabled));
   }, []);
 
-  // Pre-fill email from logged-in user
+  // Pre-fill contact details from logged-in user
   useEffect(() => {
     if (user?.email) {
-      setForm((prev) => ({ ...prev, email: user.email }));
+      setForm((prev) => ({ ...prev, email: user.email || '' }));
     }
-  }, [user?.email]);
+    if (user?.phone) {
+      setForm((prev) => ({ ...prev, phone: normalizeIndianPhone(user.phone || '') }));
+    }
+  }, [user?.email, user?.phone]);
 
   // When COD is disabled, force prepaid
   useEffect(() => {
@@ -95,37 +106,44 @@ const Checkout = () => {
   };
 
   const handleSendOtp = async () => {
-    const email = loginEmail.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setLoginError('Please enter a valid email');
+    const phone = normalizeIndianPhone(loginPhone);
+    if (!isFirebasePhoneAuthConfigured()) {
+      setLoginError('Phone OTP is not configured yet. Please add Firebase environment values.');
+      return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      setLoginError('Please enter a valid 10-digit mobile number');
       return;
     }
     setLoginError('');
     setSendingOtp(true);
     try {
-      await sendOtp(email);
+      const confirmation = await sendPhoneOtp(formatIndianPhone(phone), 'checkout-recaptcha-container');
+      setConfirmationResult(confirmation);
       setOtpSent(true);
       setOtp('');
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : 'Failed to send OTP');
+      setLoginError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.');
     } finally {
       setSendingOtp(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    const email = loginEmail.trim().toLowerCase();
-    if (!email || !otp.trim()) {
-      setLoginError('Please enter email and OTP');
+    const phone = normalizeIndianPhone(loginPhone);
+    if (!phone || !otp.trim() || !confirmationResult) {
+      setLoginError('Please enter mobile number and OTP');
       return;
     }
     setLoginError('');
     setVerifying(true);
     try {
-      const res = await verifyOtp(email, otp.trim());
-      login(res.email, res.token);
+      const credential = await confirmationResult.confirm(otp.trim());
+      const token = await credential.user.getIdToken();
+      loginWithPhone(formatIndianPhone(phone), token);
       setOtpSent(false);
       setOtp('');
+      setConfirmationResult(null);
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : 'Invalid or expired OTP');
     } finally {
@@ -181,7 +199,7 @@ const Checkout = () => {
     );
   }
 
-  // Login / OTP verification step - required before checkout
+  // Login / phone OTP verification step - required before checkout
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -191,21 +209,24 @@ const Checkout = () => {
         <div className="max-w-md mx-auto">
           <AnimatedSection animationType="scale" delay={100}>
           <div className="bg-white border rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Verify your email</h2>
-            <p className="text-gray-600 mb-6">Please sign in with your email to place an order. We&apos;ll send a verification code to your inbox.</p>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Verify your mobile number</h2>
+            <p className="text-gray-600 mb-6">Please sign in with your phone number to place an order. We&apos;ll send a verification code by SMS.</p>
 
             {!otpSent ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mobile number</label>
                   <input
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => { setLoginEmail(e.target.value); setLoginError(''); }}
-                    placeholder="your@email.com"
+                    type="tel"
+                    value={loginPhone}
+                    onChange={(e) => { setLoginPhone(normalizeIndianPhone(e.target.value)); setLoginError(''); }}
+                    placeholder="10-digit mobile number"
+                    maxLength={10}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
                   />
+                  <p className="mt-1 text-xs text-gray-500">India numbers only, +91 will be added automatically.</p>
                 </div>
+                <div id="checkout-recaptcha-container" />
                 {loginError && <p className="text-red-500 text-sm">{loginError}</p>}
                 <button
                   type="button"
@@ -219,7 +240,7 @@ const Checkout = () => {
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
-                  We sent a 6-digit code to <strong>{loginEmail}</strong>
+                  We sent a 6-digit code to <strong>{formatIndianPhone(loginPhone)}</strong>
                 </p>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Enter OTP</label>
@@ -243,17 +264,17 @@ const Checkout = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setOtpSent(false); setOtp(''); setLoginError(''); }}
+                  onClick={() => { setOtpSent(false); setOtp(''); setLoginError(''); setConfirmationResult(null); }}
                   className="w-full text-gray-600 py-2 text-sm hover:text-gray-800"
                 >
-                  Use a different email
+                  Use a different mobile number
                 </button>
               </div>
             )}
           </div>
           </AnimatedSection>
           <p className="text-center text-sm text-gray-500 mt-4">
-            OTP is sent to your email. Check spam folder if you don&apos;t see it.
+            OTP is sent by Firebase SMS verification. Standard SMS delivery rules may apply.
           </p>
         </div>
       </div>
@@ -292,7 +313,7 @@ const Checkout = () => {
         </AnimatedSection>
         {user && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Signed in as {user.email}</span>
+            <span>Signed in as {user.phone || user.email}</span>
             <button
               type="button"
               onClick={logout}

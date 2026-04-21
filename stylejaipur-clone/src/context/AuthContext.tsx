@@ -20,6 +20,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('customerAuth', JSON.stringify(u));
   };
 
+  const loginWithPhone = (phone: string, token: string) => {
+    const u = { phone, token };
+    setUser(u);
+    localStorage.setItem('customerAuth', JSON.stringify(u));
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('customerAuth');
@@ -31,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         isAuthenticated: !!user,
         login,
+        loginWithPhone,
         logout,
       }}
     >
