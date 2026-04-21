@@ -17,7 +17,7 @@ import {
 import type { Product } from '../types';
 import type { HeroSlide, StoryItem } from '../api';
 
-const getNewArrivalFeatureScore = (product: Product) => {
+const getHomeFeatureScore = (product: Product) => {
   const image = product.image.toLowerCase();
   const subcategory = product.subcategory?.toLowerCase() || '';
   let score = 0;
@@ -32,6 +32,13 @@ const getNewArrivalFeatureScore = (product: Product) => {
 
   return score;
 };
+
+const curateHomeProducts = (products: Product[], limit = 4) =>
+  products
+    .map((product, index) => ({ product, index, score: getHomeFeatureScore(product) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, limit)
+    .map(({ product }) => product);
 
 const Home = () => {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
@@ -119,12 +126,10 @@ const Home = () => {
   };
 
   const coOrdProducts = bestSellers.filter((p) => p.subcategory === 'Co-Ord Set');
-  const featuredNewArrivals = newArrivals
-    .map((product, index) => ({ product, index, score: getNewArrivalFeatureScore(product) }))
-    .sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, 4)
-    .map(({ product }) => product);
-  const watchProducts = [...featuredNewArrivals, ...bestSellers].slice(0, 3);
+  const featuredNewArrivals = curateHomeProducts(newArrivals);
+  const featuredBestSellers = curateHomeProducts(bestSellers);
+  const featuredUnstitchedCollections = curateHomeProducts(unstitchedCollections);
+  const watchProducts = [...featuredNewArrivals, ...featuredBestSellers].slice(0, 3);
 
   if (loading) {
     return (
@@ -314,7 +319,7 @@ const Home = () => {
       {/* Best Sellers */}
       <AnimatedSection animationType="fade-up" delay={100}>
         <ProductList
-          products={bestSellers}
+          products={featuredBestSellers}
           title="BEST SELLER"
           showViewAll
           viewAllLink="/best-sellers"
@@ -324,7 +329,7 @@ const Home = () => {
       {/* Unstitched Collections */}
       <AnimatedSection animationType="fade-up" delay={100}>
         <ProductList
-          products={unstitchedCollections}
+          products={featuredUnstitchedCollections}
           title="UNSTITCHED COLLECTIONS"
           showViewAll
           viewAllLink="/unstitched-collections"
