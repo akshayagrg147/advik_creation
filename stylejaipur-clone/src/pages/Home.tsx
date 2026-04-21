@@ -40,6 +40,22 @@ const curateHomeProducts = (products: Product[], limit = 4) =>
     .slice(0, limit)
     .map(({ product }) => product);
 
+const findYourFitImages: Record<string, string> = {
+  'new-arrivals': '/images/find-your-fit/new-arrivals.jpg',
+  'kurta-sets': '/images/find-your-fit/kurta-sets.jpg',
+  'co-ords': '/images/find-your-fit/co-ords.jpg',
+  gowns: '/images/find-your-fit/gowns.jpg',
+  dresses: '/images/find-your-fit/dresses.jpg',
+};
+
+const getCategoryKey = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/'/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
 const Home = () => {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
@@ -130,7 +146,11 @@ const Home = () => {
   const featuredBestSellers = curateHomeProducts(bestSellers);
   const featuredUnstitchedCollections = curateHomeProducts(unstitchedCollections);
   const visibleFindYourFitCategories = findYourFitCategories.filter(
-    (item) => !item.name.toLowerCase().includes("men's") && !item.category.toLowerCase().includes("men's")
+    (item) => {
+      const nameKey = getCategoryKey(item.name);
+      const categoryKey = getCategoryKey(item.category);
+      return !nameKey.includes('mens') && !categoryKey.includes('mens');
+    }
   );
   const watchProducts = [...featuredNewArrivals, ...featuredBestSellers].slice(0, 3);
 
@@ -207,7 +227,7 @@ const Home = () => {
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <img
-                    src={item.image}
+                    src={findYourFitImages[getCategoryKey(item.name)] || item.image}
                     alt={item.name}
                     onError={(e) => {
                       e.currentTarget.style.opacity = '0';
