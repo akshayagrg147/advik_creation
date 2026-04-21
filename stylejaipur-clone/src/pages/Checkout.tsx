@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/useCart';
 import { useAuth } from '../context/useAuth';
+import { createOrder } from '../api/orders';
 import { getCheckoutSettings } from '../api/settings';
 import { getProductPrice } from '../utils/price';
 import AnimatedSection from '../components/AnimatedSection';
@@ -44,11 +45,13 @@ const formatIndianPhone = (value: string) => `+91${normalizeIndianPhone(value)}`
 
 const Checkout = () => {
   const { cart, getCartTotal, clearCart } = useCart();
-  const { isAuthenticated, user, loginWithPhone, logout } = useAuth();
+  const { isAuthenticated, user, loginWithPhone } = useAuth();
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [placedOrderNumber, setPlacedOrderNumber] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [codEnabled, setCodEnabled] = useState(true);
 
   // Login / OTP verification state
@@ -174,12 +177,40 @@ const Checkout = () => {
       setForm((prev) => ({ ...prev, paymentMethod: 'prepaid' }));
       return;
     }
+    setSubmitError('');
     setIsSubmitting(true);
     try {
-      // TODO: Send order to backend when API is ready
-      await new Promise((r) => setTimeout(r, 800));
+      const phone = normalizeIndianPhone(form.phone);
+      const order = await createOrder({
+        customerName: form.fullName.trim(),
+        customerEmail: form.email.trim().toLowerCase(),
+        customerPhone: formatIndianPhone(phone),
+        items: cart.map((item) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          productImage: item.product.image,
+          size: item.size,
+          quantity: item.quantity,
+          price: getProductPrice(item.product, item.size),
+        })),
+        total: finalTotal,
+        paymentMethod: form.paymentMethod,
+        paymentStatus: 'pending',
+        shippingAddress: {
+          street: form.addressLine1.trim(),
+          addressLine2: form.addressLine2.trim(),
+          city: form.city.trim(),
+          state: form.state.trim(),
+          zipCode: form.pincode.trim(),
+          country: 'India',
+        },
+        orderNotes: form.orderNotes.trim(),
+      });
+      setPlacedOrderNumber(order.orderNumber);
       setOrderPlaced(true);
       clearCart();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -292,7 +323,10 @@ const Checkout = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Order placed successfully!</h2>
-          <p className="text-gray-600 mb-6">Thank you for your order. We&apos;ll send you a confirmation email shortly.</p>
+          <p className="text-gray-600 mb-2">Thank you for your order. We&apos;ll send you a confirmation email shortly.</p>
+          {placedOrderNumber && (
+            <p className="mb-6 text-sm font-semibold text-gray-900">Order number: {placedOrderNumber}</p>
+          )}
           <Link
             to="/"
             className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition"
@@ -314,13 +348,6 @@ const Checkout = () => {
         {user && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>Signed in as {user.phone || user.email}</span>
-            <button
-              type="button"
-              onClick={logout}
-              className="text-red-600 hover:text-red-700 font-medium"
-            >
-              Sign out
-            </button>
           </div>
         )}
       </div>
@@ -524,12 +551,13 @@ const Checkout = () => {
                 <span>Total</span>
                 <span>Rs. {finalTotal.toLocaleString()}</span>
               </div>
-              {(quantityDiscountAmount > 0 || prepaidDiscountAmount > 0) && (
+            {(quantityDiscountAmount > 0 || prepaidDiscountAmount > 0) && (
                 <p className="text-xs text-gray-500 mt-1">
                   You save Rs. {(quantityDiscountAmount + prepaidDiscountAmount).toLocaleString()}
                 </p>
               )}
             </div>
+            {submitError && <p className="mt-4 text-sm text-red-600">{submitError}</p>}
             <button
               type="submit"
               disabled={isSubmitting}

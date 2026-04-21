@@ -23,5 +23,7 @@ export {
   getStoriesByCategory,
 } from './banners';
 
+export { createOrder, getCustomerOrders } from './orders';
+
 export type { HeroSlide, Review, FindYourFitCategory, StoryItem } from './banners';
 export { API_BASE } from './client';

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/useCart';
+import { useAuth } from '../context/useAuth';
 import { getProductPrice } from '../utils/price';
 import { searchProducts } from '../api';
 import type { Product } from '../types';
@@ -21,6 +22,7 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { getCartItemCount, cart, removeFromCart, updateQuantity, getCartTotal } =
     useCart();
+  const { isAuthenticated } = useAuth();
 
   const cartItemCount = getCartItemCount();
   const cartTotal = getCartTotal();
@@ -206,7 +208,12 @@ const Header = () => {
               </button>
 
               {/* Account */}
-              <button className="hidden sm:inline-flex text-gray-700 hover:text-red-600">
+              <Link
+                to="/account"
+                onClick={() => setIsCartOpen(false)}
+                className="hidden sm:inline-flex text-gray-700 hover:text-red-600 relative"
+                aria-label={isAuthenticated ? 'Open account' : 'Open profile'}
+              >
                 <svg
                   className="w-6 h-6"
                   fill="none"
@@ -220,7 +227,10 @@ const Header = () => {
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-              </button>
+                {isAuthenticated && (
+                  <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                )}
+              </Link>
 
               {/* Cart */}
               <div className="relative">
@@ -459,6 +469,13 @@ const Header = () => {
             </div>
 
             <nav className="space-y-1 text-sm font-medium text-gray-800">
+              <Link
+                to="/account"
+                onClick={closeMobileMenu}
+                className="block py-2 border-b border-gray-100"
+              >
+                Profile & Orders
+              </Link>
               {navLinks.map((item) => (
                 <Link
                   key={item.to}

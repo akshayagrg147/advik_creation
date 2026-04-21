@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const orderItemSchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
   productName: { type: String, required: true },
+  productImage: String,
   size: { type: String, required: true },
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
@@ -10,6 +11,7 @@ const orderItemSchema = new mongoose.Schema({
 
 const shippingAddressSchema = new mongoose.Schema({
   street: String,
+  addressLine2: String,
   city: { type: String, required: true },
   state: { type: String, required: true },
   zipCode: String,
@@ -24,6 +26,11 @@ const orderSchema = new mongoose.Schema(
     customerPhone: String,
     items: [orderItemSchema],
     total: { type: Number, required: true },
+    paymentMethod: {
+      type: String,
+      enum: ['prepaid', 'cod'],
+      default: 'prepaid',
+    },
     status: {
       type: String,
       enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
@@ -35,6 +42,7 @@ const orderSchema = new mongoose.Schema(
       default: 'pending',
     },
     shippingAddress: { type: shippingAddressSchema, required: true },
+    orderNotes: String,
   },
   { timestamps: true, toJSON: { virtuals: true } }
 );

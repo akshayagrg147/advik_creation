@@ -27,10 +27,44 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  productImage?: string;
+  size: string;
+  quantity: number;
+  price: number;
+}
+
+export interface OrderAddress {
+  street?: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  zipCode?: string;
+  country?: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  items: OrderItem[];
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentMethod?: 'prepaid' | 'cod';
+  shippingAddress: OrderAddress;
+  orderNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Category {
   id: string;
   name: string;
   subcategories?: string[];
 }
-
 
