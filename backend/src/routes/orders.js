@@ -1,5 +1,6 @@
 import express from 'express';
 import Order from '../models/Order.js';
+import { sendOrderPaymentEmail } from '../utils/orderEmails.js';
 
 const router = express.Router();
 
@@ -61,6 +62,13 @@ router.post('/', async (req, res) => {
     const count = await Order.countDocuments();
     const orderNumber = `ORD-${String(count + 1).padStart(6, '0')}`;
     const order = await Order.create({ ...req.body, orderNumber });
+
+    if (Number(order.amountPaid || 0) > 0) {
+      sendOrderPaymentEmail(order).catch((emailError) => {
+        console.error(`Failed to send payment email for ${order.orderNumber}:`, emailError);
+      });
+    }
+
     res.status(201).json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
