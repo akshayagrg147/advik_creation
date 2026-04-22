@@ -34,7 +34,7 @@ const getPaymentLabel = (order: Order) => {
 };
 
 const Account = () => {
-  const { user, isAuthenticated, login } = useAuth();
+  const { user, isAuthenticated, login, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -178,6 +178,14 @@ const Account = () => {
               <p className="mt-1 font-medium text-gray-900">{orders.length} total</p>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-6 w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+          >
+            Sign out
+          </button>
         </aside>
 
         <section className="space-y-4">
