@@ -89,14 +89,14 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
   const featuredProduct = heroProducts[0];
   const heroTitle = 'Advik Creations';
   const heroSubtitle =
-    currentSlide?.subtitle || 'Fresh festive wear, polished everyday sets, and occasion-ready silhouettes.';
+    currentSlide?.subtitle || 'Festive ethnicwear, crafted for modern celebrations.';
   const heroButtonText = currentSlide?.buttonText || 'Shop New Arrivals';
   const heroButtonLink = currentSlide?.buttonLink || '/new-arrivals';
 
   return (
     <section
       ref={sectionRef}
-      className="hero-3d relative min-h-[760px] overflow-hidden bg-[#111827] md:min-h-[600px]"
+      className="hero-3d relative min-h-[690px] overflow-hidden bg-[#111827] md:min-h-[600px]"
       style={{ perspective: '1400px' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -105,57 +105,57 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
         <img
           src="/images/advik-hero-editorial.png"
           alt="Advik Creations festive collection"
-          className="hero-slide-layer h-full w-full object-cover object-[58%_center] md:object-center"
+          className="hero-slide-layer h-full w-full object-cover object-[64%_center] md:object-center"
           style={{ transform: `translate3d(0, ${-parallaxY}px, 0) scale(1.05)` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/78 to-gray-950/8 md:via-gray-950/50" />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-950/45 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/70 to-gray-950/8 md:via-gray-950/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950/55 via-transparent to-transparent" />
       </div>
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_22%,rgba(16,185,129,0.22),transparent_30%),radial-gradient(circle_at_18%_80%,rgba(220,38,38,0.22),transparent_28%)]" />
 
       <div
-        className="container mx-auto absolute inset-0 z-10 flex flex-col justify-center gap-8 overflow-hidden px-4 py-8 md:grid md:grid-cols-[0.92fr_1.08fr] md:items-center lg:px-8"
+        className="container mx-auto absolute inset-0 z-10 flex flex-col justify-center gap-8 overflow-hidden px-4 py-7 md:grid md:grid-cols-[0.92fr_1.08fr] md:items-center lg:px-8"
         style={{ transform: 'translateZ(40px)', perspective: '1400px' }}
       >
         <div className="w-[calc(100vw-2rem)] max-w-none text-white pointer-events-auto md:w-full md:max-w-xl">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/85 backdrop-blur">
+          <div className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/85 backdrop-blur sm:text-xs sm:tracking-[0.22em]">
             Limited festive edit
           </div>
           <h1 className="max-w-[11ch] text-4xl font-semibold leading-[0.98] text-white sm:text-5xl md:text-6xl lg:text-7xl">
             {heroTitle}
           </h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-white/82 md:text-lg">
+          <p className="mt-5 max-w-[28rem] text-base leading-7 text-white/84 md:text-lg">
             {heroSubtitle}
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
             <Link
               to={heroButtonLink}
-              className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-semibold text-gray-950 shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:bg-gray-100"
+              className="inline-flex min-h-12 items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-semibold text-gray-950 shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:bg-gray-100 sm:px-6"
             >
               {heroButtonText}
             </Link>
             <Link
               to="/best-sellers"
-              className="inline-flex items-center justify-center rounded-lg border border-white/25 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
+              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/25 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10 sm:px-6"
             >
               Best Sellers
             </Link>
           </div>
-          <div className="mt-8 grid w-[calc(100vw-2rem)] max-w-none grid-cols-2 gap-2 text-white sm:grid-cols-3 sm:gap-3 md:w-full md:max-w-lg">
+          <div className="mt-7 grid w-[calc(100vw-2rem)] max-w-none grid-cols-2 gap-3 text-white sm:grid-cols-3 md:w-full md:max-w-lg">
             {[
               ['4.7/5', 'Customer rating'],
-              ['Fresh', 'Curated edits'],
+              ['11+', 'Curated styles'],
               ['COD', 'Available'],
             ].map(([value, label], index) => (
-              <div key={label} className={`min-w-0 rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur ${index === 2 ? 'hidden sm:block' : ''}`}>
-                <div className="text-lg font-semibold sm:text-xl">{value}</div>
-                <div className="mt-1 truncate text-[9px] uppercase text-white/65 sm:text-[11px] sm:tracking-wide">{label}</div>
+              <div key={label} className={`min-w-0 rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur ${index === 2 ? 'hidden sm:block' : ''}`}>
+                <div className="text-2xl font-semibold sm:text-xl">{value}</div>
+                <div className="mt-1 truncate text-[10px] uppercase tracking-wide text-white/65 sm:text-[11px]">{label}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-7 grid w-[calc(100vw-2rem)] grid-cols-2 gap-2 md:hidden">
+          <div className="mt-7 hidden w-[calc(100vw-2rem)] grid-cols-2 gap-2 sm:grid md:hidden">
             {heroProducts.slice(0, 2).map((product) => (
               <Link
                 key={product.id}
