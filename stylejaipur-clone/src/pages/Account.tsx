@@ -27,6 +27,12 @@ const formatDate = (value: string) =>
     year: 'numeric',
   }).format(new Date(value));
 
+const getPaymentLabel = (order: Order) => {
+  if (order.paymentMethod === 'partial_cod') return `Partial COD · Rs. ${(order.amountDue || 0).toLocaleString()} due`;
+  if (order.paymentMethod === 'cod') return 'Full COD';
+  return 'Prepaid';
+};
+
 const Account = () => {
   const { user, isAuthenticated, login } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -221,7 +227,7 @@ const Account = () => {
                       {order.status}
                     </span>
                     <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize text-gray-700 ring-1 ring-gray-200">
-                      {order.paymentMethod || 'prepaid'} · {order.paymentStatus}
+                      {getPaymentLabel(order)} · {order.paymentStatus.replace('_', ' ')}
                     </span>
                   </div>
                 </div>

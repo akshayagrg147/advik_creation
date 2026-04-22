@@ -2,6 +2,9 @@ import fetchApi from './client';
 
 export interface Settings {
   codEnabled: boolean;
+  partialCodEnabled: boolean;
+  partialCodAdvanceAmount: string;
+  prepaidDiscountPercent: string;
   siteName: string;
   siteEmail: string;
   sitePhone: string;

@@ -10,7 +10,10 @@ const settingsSchema = new mongoose.Schema(
     taxRate: { type: String, default: '18' },
     shippingCost: { type: String, default: '50' },
     freeShippingThreshold: { type: String, default: '1000' },
-    codEnabled: { type: Boolean, default: true },
+    codEnabled: { type: Boolean, default: false },
+    partialCodEnabled: { type: Boolean, default: true },
+    partialCodAdvanceAmount: { type: String, default: '99' },
+    prepaidDiscountPercent: { type: String, default: '5' },
   },
   { timestamps: true }
 );

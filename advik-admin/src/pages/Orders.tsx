@@ -49,6 +49,18 @@ const Orders = () => {
     }
   };
 
+  const getPaymentSummary = (order: Order) => {
+    if (order.paymentMethod === 'partial_cod') {
+      return `Partial COD: ₹${(order.amountPaid || 0).toLocaleString()} paid, ₹${(order.amountDue || 0).toLocaleString()} due`;
+    }
+
+    if (order.paymentMethod === 'cod') {
+      return `Full COD: ₹${order.total.toLocaleString()} due`;
+    }
+
+    return `Prepaid: ₹${(order.amountPaid ?? order.total).toLocaleString()} paid`;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -149,10 +161,12 @@ const Orders = () => {
                         className={`px-2 py-1 text-xs font-semibold rounded-full ${
                           order.paymentStatus === 'paid'
                             ? 'bg-green-100 text-green-800'
+                            : order.paymentStatus === 'partially_paid'
+                              ? 'bg-blue-100 text-blue-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
-                        {order.paymentStatus}
+                        {getPaymentSummary(order)}
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -198,9 +212,13 @@ const Orders = () => {
                     <option value="cancelled">Cancelled</option>
                   </select>
                   <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                    order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    order.paymentStatus === 'paid'
+                      ? 'bg-green-100 text-green-800'
+                      : order.paymentStatus === 'partially_paid'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {order.paymentStatus}
+                    {getPaymentSummary(order)}
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{new Date(order.createdAt).toLocaleDateString()}</p>

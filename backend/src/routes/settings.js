@@ -11,7 +11,10 @@ router.get('/', async (req, res) => {
       settings = await Settings.create({ key: 'store' });
     }
     res.json({
-      codEnabled: settings.codEnabled ?? true,
+      codEnabled: settings.codEnabled ?? false,
+      partialCodEnabled: settings.partialCodEnabled ?? true,
+      partialCodAdvanceAmount: settings.partialCodAdvanceAmount ?? '99',
+      prepaidDiscountPercent: settings.prepaidDiscountPercent ?? '5',
       siteName: settings.siteName,
       siteEmail: settings.siteEmail,
       sitePhone: settings.sitePhone,
@@ -32,7 +35,14 @@ router.get('/checkout', async (req, res) => {
     if (!settings) {
       settings = await Settings.create({ key: 'store' });
     }
-    res.json({ codEnabled: settings.codEnabled ?? true });
+    res.json({
+      codEnabled: settings.codEnabled ?? false,
+      partialCodEnabled: settings.partialCodEnabled ?? true,
+      partialCodAdvanceAmount: settings.partialCodAdvanceAmount ?? '99',
+      prepaidDiscountPercent: settings.prepaidDiscountPercent ?? '5',
+      shippingCost: settings.shippingCost ?? '50',
+      freeShippingThreshold: settings.freeShippingThreshold ?? '1000',
+    });
   } catch (err) {
     res.status(500).json({ error: err.message || 'Failed to fetch settings' });
   }
@@ -41,7 +51,19 @@ router.get('/checkout', async (req, res) => {
 // Update settings (admin)
 router.put('/', async (req, res) => {
   try {
-    const { siteName, siteEmail, sitePhone, currency, taxRate, shippingCost, freeShippingThreshold, codEnabled } = req.body;
+    const {
+      siteName,
+      siteEmail,
+      sitePhone,
+      currency,
+      taxRate,
+      shippingCost,
+      freeShippingThreshold,
+      codEnabled,
+      partialCodEnabled,
+      partialCodAdvanceAmount,
+      prepaidDiscountPercent,
+    } = req.body;
     let settings = await Settings.findOne({ key: 'store' });
     if (!settings) {
       settings = new Settings({ key: 'store' });
@@ -54,6 +76,9 @@ router.put('/', async (req, res) => {
     if (typeof shippingCost !== 'undefined') settings.shippingCost = String(shippingCost);
     if (typeof freeShippingThreshold !== 'undefined') settings.freeShippingThreshold = String(freeShippingThreshold);
     if (typeof codEnabled !== 'undefined') settings.codEnabled = Boolean(codEnabled);
+    if (typeof partialCodEnabled !== 'undefined') settings.partialCodEnabled = Boolean(partialCodEnabled);
+    if (typeof partialCodAdvanceAmount !== 'undefined') settings.partialCodAdvanceAmount = String(partialCodAdvanceAmount);
+    if (typeof prepaidDiscountPercent !== 'undefined') settings.prepaidDiscountPercent = String(prepaidDiscountPercent);
     await settings.save();
     res.json(settings);
   } catch (err) {

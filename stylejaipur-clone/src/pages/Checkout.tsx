@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/useCart';
 import { useAuth } from '../context/useAuth';
 import { createOrder } from '../api/orders';
+import { createRazorpayOrder, verifyRazorpayPayment } from '../api/payments';
 import { getCheckoutSettings } from '../api/settings';
 import { getProductPrice } from '../utils/price';
 import AnimatedSection from '../components/AnimatedSection';
@@ -13,7 +14,40 @@ import {
   type PhoneConfirmationResult,
 } from '../lib/firebase';
 
-type PaymentMethod = 'prepaid' | 'cod';
+type PaymentMethod = 'prepaid' | 'partial_cod' | 'cod';
+
+type RazorpaySuccessResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayCheckoutOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme: {
+    color: string;
+  };
+  handler: (response: RazorpaySuccessResponse) => void;
+  modal: {
+    ondismiss: () => void;
+  };
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => { open: () => void };
+  }
+}
 
 interface FormData {
   fullName: string;
@@ -38,7 +72,7 @@ const initialForm: FormData = {
   state: '',
   pincode: '',
   orderNotes: '',
-  paymentMethod: 'prepaid',
+  paymentMethod: 'partial_cod',
 };
 
 const normalizeIndianPhone = (value: string) => value.replace(/\D/g, '').slice(-10);
@@ -54,6 +88,11 @@ const Checkout = () => {
   const [placedOrderNumber, setPlacedOrderNumber] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [codEnabled, setCodEnabled] = useState(true);
+  const [partialCodEnabled, setPartialCodEnabled] = useState(true);
+  const [partialCodAdvanceAmount, setPartialCodAdvanceAmount] = useState(99);
+  const [prepaidDiscountPercent, setPrepaidDiscountPercent] = useState(5);
+  const [shippingCost, setShippingCost] = useState(50);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(1000);
 
   // Login / OTP verification state
   const [loginPhone, setLoginPhone] = useState('');
@@ -66,7 +105,14 @@ const Checkout = () => {
   const [confirmationResult, setConfirmationResult] = useState<PhoneConfirmationResult | null>(null);
 
   useEffect(() => {
-    getCheckoutSettings().then((s) => setCodEnabled(s.codEnabled));
+    getCheckoutSettings().then((s) => {
+      setCodEnabled(s.codEnabled);
+      setPartialCodEnabled(s.partialCodEnabled);
+      setPartialCodAdvanceAmount(Number(s.partialCodAdvanceAmount) || 99);
+      setPrepaidDiscountPercent(Number(s.prepaidDiscountPercent) || 5);
+      setShippingCost(Number(s.shippingCost) || 50);
+      setFreeShippingThreshold(Number(s.freeShippingThreshold) || 1000);
+    });
   }, []);
 
   // Pre-fill contact details from logged-in user
@@ -84,10 +130,13 @@ const Checkout = () => {
 
   // When COD is disabled, force prepaid
   useEffect(() => {
-    if (!codEnabled && form.paymentMethod === 'cod') {
+    if (form.paymentMethod === 'cod' && !codEnabled) {
+      setForm((prev) => ({ ...prev, paymentMethod: partialCodEnabled ? 'partial_cod' : 'prepaid' }));
+    }
+    if (form.paymentMethod === 'partial_cod' && !partialCodEnabled) {
       setForm((prev) => ({ ...prev, paymentMethod: 'prepaid' }));
     }
-  }, [codEnabled, form.paymentMethod]);
+  }, [codEnabled, form.paymentMethod, partialCodEnabled]);
 
   const subtotal = getCartTotal();
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -97,12 +146,16 @@ const Checkout = () => {
   const quantityDiscountAmount = Math.round((subtotal * quantityDiscountPercent) / 100);
   const afterQuantityDiscount = subtotal - quantityDiscountAmount;
 
-  const prepaidDiscountPercent = form.paymentMethod === 'prepaid' ? 5 : 0;
-  const prepaidDiscountAmount = Math.round((afterQuantityDiscount * prepaidDiscountPercent) / 100);
+  const activePrepaidDiscountPercent = form.paymentMethod === 'prepaid' ? prepaidDiscountPercent : 0;
+  const prepaidDiscountAmount = Math.round((afterQuantityDiscount * activePrepaidDiscountPercent) / 100);
 
   const totalAfterDiscounts = afterQuantityDiscount - prepaidDiscountAmount;
-  const shipping = cart.length > 0 ? 50 : 0;
+  const shipping = cart.length > 0 && totalAfterDiscounts < freeShippingThreshold ? shippingCost : 0;
   const finalTotal = totalAfterDiscounts + shipping;
+  const advanceAmount = Math.min(partialCodAdvanceAmount, finalTotal);
+  const amountPaidNow =
+    form.paymentMethod === 'prepaid' ? finalTotal : form.paymentMethod === 'partial_cod' ? advanceAmount : 0;
+  const amountDueOnDelivery = Math.max(finalTotal - amountPaidNow, 0);
 
   const update = (key: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -111,6 +164,73 @@ const Checkout = () => {
 
   const setPaymentMethod = (method: PaymentMethod) => {
     setForm((prev) => ({ ...prev, paymentMethod: method }));
+  };
+
+  const loadRazorpayScript = () =>
+    new Promise<boolean>((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  const collectOnlinePayment = async (): Promise<RazorpaySuccessResponse | null> => {
+    if (amountPaidNow <= 0) return null;
+
+    const loaded = await loadRazorpayScript();
+    if (!loaded || !window.Razorpay) {
+      throw new Error('Payment gateway failed to load. Please try again.');
+    }
+
+    const paymentOrder = await createRazorpayOrder({
+      amount: amountPaidNow,
+      receipt: `advik_${Date.now()}`,
+      notes: {
+        paymentMethod: form.paymentMethod,
+        customerPhone: formatIndianPhone(form.phone),
+      },
+    });
+
+    return new Promise((resolve, reject) => {
+      const RazorpayCheckout = window.Razorpay;
+
+      if (!RazorpayCheckout) {
+        reject(new Error('Payment gateway failed to load. Please try again.'));
+        return;
+      }
+
+      const checkout = new RazorpayCheckout({
+        key: paymentOrder.keyId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        name: 'Advik Creations',
+        description:
+          form.paymentMethod === 'partial_cod'
+            ? `Partial COD advance of Rs. ${amountPaidNow}`
+            : `Prepaid order payment of Rs. ${amountPaidNow}`,
+        order_id: paymentOrder.id,
+        prefill: {
+          name: form.fullName,
+          email: form.email,
+          contact: normalizeIndianPhone(form.phone),
+        },
+        theme: {
+          color: '#dc2626',
+        },
+        handler: (response) => resolve(response),
+        modal: {
+          ondismiss: () => reject(new Error('Payment was cancelled.')),
+        },
+      });
+
+      checkout.open();
+    });
   };
 
   const handleSendOtp = async () => {
@@ -207,7 +327,11 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || isSubmitting) return;
-    if (!codEnabled && form.paymentMethod === 'cod') {
+    if (form.paymentMethod === 'cod' && !codEnabled) {
+      setForm((prev) => ({ ...prev, paymentMethod: partialCodEnabled ? 'partial_cod' : 'prepaid' }));
+      return;
+    }
+    if (form.paymentMethod === 'partial_cod' && !partialCodEnabled) {
       setForm((prev) => ({ ...prev, paymentMethod: 'prepaid' }));
       return;
     }
@@ -215,6 +339,12 @@ const Checkout = () => {
     setIsSubmitting(true);
     try {
       const phone = normalizeIndianPhone(form.phone);
+      const payment = await collectOnlinePayment();
+
+      if (payment) {
+        await verifyRazorpayPayment(payment);
+      }
+
       const order = await createOrder({
         customerName: form.fullName.trim(),
         customerEmail: form.email.trim().toLowerCase(),
@@ -229,7 +359,17 @@ const Checkout = () => {
         })),
         total: finalTotal,
         paymentMethod: form.paymentMethod,
-        paymentStatus: 'pending',
+        amountPaid: amountPaidNow,
+        amountDue: amountDueOnDelivery,
+        paymentStatus:
+          form.paymentMethod === 'prepaid'
+            ? 'paid'
+            : form.paymentMethod === 'partial_cod'
+              ? 'partially_paid'
+              : 'pending',
+        paymentGateway: payment ? 'razorpay' : undefined,
+        paymentId: payment?.razorpay_payment_id,
+        paymentOrderId: payment?.razorpay_order_id,
         shippingAddress: {
           street: form.addressLine1.trim(),
           addressLine2: form.addressLine2.trim(),
@@ -523,21 +663,51 @@ const Checkout = () => {
           <div className="bg-white border rounded-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Payment Method</h2>
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+              <label className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
                 <input
                   type="radio"
                   name="paymentMethod"
                   checked={form.paymentMethod === 'prepaid'}
                   onChange={() => setPaymentMethod('prepaid')}
-                  className="w-4 h-4 text-red-600"
+                  className="mt-1 w-4 h-4 text-red-600"
                 />
-                <div>
-                  <span className="font-medium">Prepaid (UPI / Card / Net Banking)</span>
-                  <p className="text-sm text-green-600 mt-0.5">Extra 5% off on prepaid orders</p>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">Prepaid</span>
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                      Extra {prepaidDiscountPercent}% off
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-0.5">Pay full amount online by UPI, card, net banking or wallet.</p>
                 </div>
               </label>
               <label
-                className={`flex items-center gap-3 p-4 border rounded-lg has-[:checked]:border-red-600 has-[:checked]:bg-red-50 ${
+                className={`flex items-start gap-3 p-4 border rounded-lg has-[:checked]:border-red-600 has-[:checked]:bg-red-50 ${
+                  partialCodEnabled ? 'cursor-pointer hover:bg-gray-50' : 'cursor-not-allowed opacity-60 bg-gray-50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={form.paymentMethod === 'partial_cod'}
+                  onChange={() => partialCodEnabled && setPaymentMethod('partial_cod')}
+                  disabled={!partialCodEnabled}
+                  className="mt-1 w-4 h-4 text-red-600"
+                />
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">Partial COD</span>
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Pay Rs. {advanceAmount.toLocaleString()} now to confirm. Pay Rs. {amountDueOnDelivery.toLocaleString()} on delivery.
+                  </p>
+                </div>
+              </label>
+              <label
+                className={`flex items-start gap-3 p-4 border rounded-lg has-[:checked]:border-red-600 has-[:checked]:bg-red-50 ${
                   codEnabled ? 'cursor-pointer hover:bg-gray-50' : 'cursor-not-allowed opacity-60 bg-gray-50'
                 }`}
               >
@@ -547,12 +717,12 @@ const Checkout = () => {
                   checked={form.paymentMethod === 'cod'}
                   onChange={() => codEnabled && setPaymentMethod('cod')}
                   disabled={!codEnabled}
-                  className="w-4 h-4 text-red-600"
+                  className="mt-1 w-4 h-4 text-red-600"
                 />
                 <div>
-                  <span className="font-medium">Cash on Delivery (COD)</span>
+                  <span className="font-medium">Full COD</span>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    {codEnabled ? 'Pay when you receive' : 'Currently not available'}
+                    {codEnabled ? 'Pay the full order amount when you receive it.' : 'Currently not available'}
                   </p>
                 </div>
               </label>
@@ -591,7 +761,7 @@ const Checkout = () => {
               )}
               {prepaidDiscountAmount > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Prepaid – 5% extra off</span>
+                  <span>Prepaid – {prepaidDiscountPercent}% extra off</span>
                   <span className="font-medium">- Rs. {prepaidDiscountAmount.toLocaleString()}</span>
                 </div>
               )}
@@ -603,6 +773,18 @@ const Checkout = () => {
                 <span>Total</span>
                 <span>Rs. {finalTotal.toLocaleString()}</span>
               </div>
+              {amountPaidNow > 0 && (
+                <div className="flex justify-between rounded-lg bg-green-50 px-3 py-2 text-green-700">
+                  <span className="font-medium">Pay now</span>
+                  <span className="font-semibold">Rs. {amountPaidNow.toLocaleString()}</span>
+                </div>
+              )}
+              {amountDueOnDelivery > 0 && (
+                <div className="flex justify-between rounded-lg bg-gray-50 px-3 py-2 text-gray-700">
+                  <span className="font-medium">Pay on delivery</span>
+                  <span className="font-semibold">Rs. {amountDueOnDelivery.toLocaleString()}</span>
+                </div>
+              )}
             {(quantityDiscountAmount > 0 || prepaidDiscountAmount > 0) && (
                 <p className="text-xs text-gray-500 mt-1">
                   You save Rs. {(quantityDiscountAmount + prepaidDiscountAmount).toLocaleString()}
@@ -615,7 +797,13 @@ const Checkout = () => {
               disabled={isSubmitting}
               className="w-full mt-6 bg-red-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-red-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Placing order...' : 'Place order'}
+              {isSubmitting
+                ? amountPaidNow > 0
+                  ? 'Opening payment...'
+                  : 'Placing order...'
+                : amountPaidNow > 0
+                  ? `Pay Rs. ${amountPaidNow.toLocaleString()} & Place Order`
+                  : 'Place COD Order'}
             </button>
             <Link to="/cart" className="block text-center text-red-600 hover:text-red-700 font-medium mt-4">
               ← Back to cart

@@ -28,9 +28,14 @@ const orderSchema = new mongoose.Schema(
     total: { type: Number, required: true },
     paymentMethod: {
       type: String,
-      enum: ['prepaid', 'cod'],
+      enum: ['prepaid', 'partial_cod', 'cod'],
       default: 'prepaid',
     },
+    amountPaid: { type: Number, default: 0 },
+    amountDue: { type: Number, default: 0 },
+    paymentGateway: String,
+    paymentId: String,
+    paymentOrderId: String,
     status: {
       type: String,
       enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
@@ -38,7 +43,7 @@ const orderSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
+      enum: ['pending', 'paid', 'partially_paid', 'failed', 'refunded'],
       default: 'pending',
     },
     shippingAddress: { type: shippingAddressSchema, required: true },

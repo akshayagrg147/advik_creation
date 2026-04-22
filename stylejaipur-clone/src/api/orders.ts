@@ -14,8 +14,13 @@ export type CreateOrderInput = {
     price: number;
   }>;
   total: number;
-  paymentMethod: 'prepaid' | 'cod';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentMethod: 'prepaid' | 'partial_cod' | 'cod';
+  amountPaid: number;
+  amountDue: number;
+  paymentStatus: 'pending' | 'paid' | 'partially_paid' | 'failed' | 'refunded';
+  paymentGateway?: string;
+  paymentId?: string;
+  paymentOrderId?: string;
   shippingAddress: {
     street: string;
     addressLine2?: string;

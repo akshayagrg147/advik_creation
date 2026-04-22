@@ -54,8 +54,13 @@ export interface Order {
   items: OrderItem[];
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  paymentMethod?: 'prepaid' | 'cod';
+  paymentStatus: 'pending' | 'paid' | 'partially_paid' | 'failed' | 'refunded';
+  paymentMethod?: 'prepaid' | 'partial_cod' | 'cod';
+  amountPaid?: number;
+  amountDue?: number;
+  paymentGateway?: string;
+  paymentId?: string;
+  paymentOrderId?: string;
   shippingAddress: OrderAddress;
   orderNotes?: string;
   createdAt: string;
@@ -67,4 +72,3 @@ export interface Category {
   name: string;
   subcategories?: string[];
 }
-

@@ -33,7 +33,10 @@ export interface Order {
   items: OrderItem[];
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentStatus: 'pending' | 'paid' | 'partially_paid' | 'failed' | 'refunded';
+  paymentMethod?: 'prepaid' | 'partial_cod' | 'cod';
+  amountPaid?: number;
+  amountDue?: number;
   shippingAddress: Address;
   createdAt: string;
   updatedAt: string;
@@ -42,6 +45,7 @@ export interface Order {
 export interface OrderItem {
   productId: string;
   productName: string;
+  productImage?: string;
   size: string;
   quantity: number;
   price: number;
@@ -102,4 +106,3 @@ export interface Story {
   createdAt: string;
   updatedAt: string;
 }
-

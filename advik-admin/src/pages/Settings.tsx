@@ -11,7 +11,10 @@ const Settings = () => {
     taxRate: '18',
     shippingCost: '50',
     freeShippingThreshold: '1000',
-    codEnabled: true,
+    partialCodEnabled: true,
+    partialCodAdvanceAmount: '99',
+    prepaidDiscountPercent: '5',
+    codEnabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -122,6 +125,47 @@ const Settings = () => {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Prepaid Discount (%)</label>
+            <input
+              type="number"
+              value={settings.prepaidDiscountPercent}
+              onChange={(e) => handleChange('prepaidDiscountPercent', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="mt-1 text-sm text-gray-500">Reward full online payment with a small trust-building discount.</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Partial COD</label>
+              <p className="text-sm text-gray-500">Customer pays an advance online, then pays the balance on delivery</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={settings.partialCodEnabled}
+                onChange={(e) => handleChange('partialCodEnabled', e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              <span className="ms-3 text-sm font-medium text-gray-700">
+                {settings.partialCodEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Partial COD Advance (₹)</label>
+            <input
+              type="number"
+              value={settings.partialCodAdvanceAmount}
+              onChange={(e) => handleChange('partialCodAdvanceAmount', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="mt-1 text-sm text-gray-500">Recommended: ₹99 to reduce fake orders and cover shipping risk.</p>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Free Shipping Threshold (₹)
             </label>
@@ -135,8 +179,8 @@ const Settings = () => {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cash on Delivery (COD)</label>
-              <p className="text-sm text-gray-500">Allow customers to pay when they receive the order</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Cash on Delivery (COD)</label>
+              <p className="text-sm text-gray-500">Allow full pay-on-delivery orders. Keep this off if you want only partial COD.</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
               <input
@@ -168,4 +212,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

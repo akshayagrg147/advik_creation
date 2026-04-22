@@ -11,6 +11,7 @@ import dashboardRoutes from './routes/dashboard.js';
 import orderRoutes from './routes/orders.js';
 import settingsRoutes from './routes/settings.js';
 import authRoutes from './routes/auth.js';
+import paymentRoutes from './routes/payments.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,6 +23,11 @@ connectDB();
 const allowedOrigins = [
   'http://localhost:5173',  // advik-admin
   'http://localhost:5174',  // stylejaipur-clone
+  'http://localhost:5175',  // local preview
+  'http://127.0.0.1:5175',
+  'http://13.232.132.63',
+  'https://advikcreationz.com',
+  'https://www.advikcreationz.com',
 ];
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
@@ -37,6 +43,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Advik Ecom API' });
@@ -53,6 +60,7 @@ app.get('/', (req, res) => {
       orders: '/api/orders',
       dashboard: '/api/dashboard',
       auth: '/api/auth',
+      payments: '/api/payments',
       settings: '/api/settings',
       upload: '/api/upload',
     },
