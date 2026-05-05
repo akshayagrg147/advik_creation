@@ -65,6 +65,7 @@ const prepareDallE2ReferenceAsset = async (asset) => {
       fit: 'contain',
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     })
+    .ensureAlpha()
     .png()
     .toBuffer();
 
