@@ -22,6 +22,14 @@ const productSchema = new mongoose.Schema(
     bestSeller: Boolean,
     newArrival: Boolean,
     unstitchedCollection: Boolean,
+    generatedModelImage: String,
+    generatedModelPrompt: String,
+    generatedModelStatus: {
+      type: String,
+      enum: ['idle', 'generating', 'ready', 'failed'],
+      default: 'idle',
+    },
+    generatedModelError: String,
   },
   { timestamps: true, toJSON: { virtuals: true } }
 );

@@ -1,5 +1,6 @@
 import express from 'express';
 import Product from '../models/Product.js';
+import { generateProductModelImage } from '../lib/productModelGeneration.js';
 
 const router = express.Router();
 
@@ -17,6 +18,71 @@ function categoryMatch(value, normalized) {
   const n = normalized.replace(/'/g, '').toLowerCase();
   return v === n;
 }
+
+const stripTransientProductFields = (body = {}) => {
+  const next = { ...body };
+  delete next.autoGenerateModelImage;
+  delete next.aiModelPromptNotes;
+  return next;
+};
+
+const referencesChanged = (product, payload = {}) => {
+  const nextMainImage = payload.image ?? product.image;
+  const nextImages = payload.images ?? product.images ?? [];
+  const currentImages = product.images ?? [];
+
+  return (
+    nextMainImage !== product.image ||
+    JSON.stringify(nextImages) !== JSON.stringify(currentImages)
+  );
+};
+
+const maybeGenerateModelShot = async (product, body = {}) => {
+  if (body.autoGenerateModelImage !== true) {
+    return product;
+  }
+
+  try {
+    const generated = await generateProductModelImage(product, {
+      promptNotes: body.aiModelPromptNotes || '',
+    });
+
+    product.generatedModelImage = generated.imageUrl;
+    product.generatedModelPrompt = generated.prompt;
+    product.generatedModelStatus = 'ready';
+    product.generatedModelError = undefined;
+    await product.save();
+  } catch (error) {
+    product.generatedModelImage = undefined;
+    product.generatedModelPrompt = undefined;
+    product.generatedModelStatus = 'failed';
+    product.generatedModelError = error.message;
+    await product.save();
+  }
+
+  return product;
+};
+
+// POST /api/products/preview-model-image - Generate preview without saving product
+router.post('/preview-model-image', async (req, res) => {
+  try {
+    const product = stripTransientProductFields(req.body);
+    if (!product.image) {
+      return res.status(400).json({ error: 'Add a main image before generating a preview.' });
+    }
+
+    const generated = await generateProductModelImage(product, {
+      promptNotes: req.body.aiModelPromptNotes || '',
+    });
+
+    res.json({
+      imageUrl: generated.imageUrl,
+      prompt: generated.prompt,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // GET /api/products - All products
 router.get('/', async (req, res) => {
@@ -136,8 +202,15 @@ router.get('/:id', async (req, res) => {
 // POST /api/products - Create (admin)
 router.post('/', async (req, res) => {
   try {
-    const product = await Product.create(req.body);
-    res.status(201).json(product);
+    const payload = stripTransientProductFields(req.body);
+    if (req.body.autoGenerateModelImage === true) {
+      payload.generatedModelStatus = 'generating';
+      payload.generatedModelError = undefined;
+    }
+
+    const product = await Product.create(payload);
+    const savedProduct = await maybeGenerateModelShot(product, req.body);
+    res.status(201).json(savedProduct.toJSON());
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -146,12 +219,28 @@ router.post('/', async (req, res) => {
 // PUT /api/products/:id - Update (admin)
 router.put('/:id', async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const payload = stripTransientProductFields(req.body);
+    if (req.body.autoGenerateModelImage === true) {
+      payload.generatedModelStatus = 'generating';
+      payload.generatedModelError = undefined;
+    }
+
+    const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    res.json(product);
+
+    const shouldClearGeneratedModel = referencesChanged(product, payload) && req.body.autoGenerateModelImage !== true;
+
+    Object.assign(product, payload);
+    if (shouldClearGeneratedModel) {
+      product.generatedModelImage = undefined;
+      product.generatedModelPrompt = undefined;
+      product.generatedModelStatus = 'idle';
+      product.generatedModelError = undefined;
+    }
+    await product.save();
+
+    const savedProduct = await maybeGenerateModelShot(product, req.body);
+    res.json(savedProduct.toJSON());
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

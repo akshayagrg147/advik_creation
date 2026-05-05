@@ -2,6 +2,19 @@ import type { Product } from '../types';
 import fetchApi from './client';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+type ProductMutationPayload = Partial<Product> & {
+  autoGenerateModelImage?: boolean;
+  aiModelPromptNotes?: string;
+};
+
+export async function previewProductModelImage(
+  data: ProductMutationPayload
+): Promise<{ imageUrl: string; prompt: string }> {
+  return fetchApi<{ imageUrl: string; prompt: string }>('/products/preview-model-image', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
 
 export async function uploadProductImage(file: File): Promise<{ url: string }> {
   const formData = new FormData();
@@ -63,7 +76,7 @@ export async function getProductById(id: string): Promise<Product | null> {
   }
 }
 
-export async function createProduct(data: Partial<Product>): Promise<Product> {
+export async function createProduct(data: ProductMutationPayload): Promise<Product> {
   const payload = {
     ...data,
     sizes: data.sizes || ['M-38', 'L-40', 'XL-42'],
@@ -75,7 +88,7 @@ export async function createProduct(data: Partial<Product>): Promise<Product> {
   });
 }
 
-export async function updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+export async function updateProduct(id: string, data: ProductMutationPayload): Promise<Product> {
   return fetchApi<Product>(`/products/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),

@@ -3,6 +3,7 @@ import type { Product } from '../types';
 import { getProductPrice } from '../utils/price';
 import { useCart } from '../context/useCart';
 import { useState } from 'react';
+import { getPrimaryProductImage } from '../utils/productMedia';
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +19,7 @@ const ProductCard = ({ product, variant = 'default' }: ProductCardProps) => {
   const [selectedSize, setSelectedSize] = useState(defaultSize);
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const isPremium = variant === 'premium';
+  const primaryImage = getPrimaryProductImage(product);
 
   const handleAddToCart = () => {
     const size = selectedSize || defaultSize;
@@ -38,7 +40,7 @@ const ProductCard = ({ product, variant = 'default' }: ProductCardProps) => {
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
           <img
-            src={product.image}
+            src={primaryImage}
             alt={product.name}
             onError={(e) => {
               e.currentTarget.style.opacity = '0';

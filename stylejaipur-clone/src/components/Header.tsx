@@ -5,6 +5,7 @@ import { useAuth } from '../context/useAuth';
 import { getProductPrice } from '../utils/price';
 import { searchProducts } from '../api';
 import type { Product } from '../types';
+import { getPrimaryProductImage } from '../utils/productMedia';
 
 const navLinks = [
   { label: 'New Arrivals', to: '/new-arrivals' },
@@ -160,7 +161,7 @@ const Header = () => {
                             className="flex gap-3 px-4 py-2 hover:bg-gray-50"
                           >
                             <img
-                              src={product.image}
+                              src={getPrimaryProductImage(product)}
                               alt={product.name}
                               className="w-12 h-12 object-cover rounded-md"
                             />
@@ -308,7 +309,7 @@ const Header = () => {
                                 className="flex gap-3 border-b border-gray-100 pb-3"
                               >
                                 <img
-                                  src={item.product.image}
+                                  src={getPrimaryProductImage(item.product)}
                                   alt={item.product.name}
                                   className="w-20 h-20 object-cover rounded-md"
                                 />

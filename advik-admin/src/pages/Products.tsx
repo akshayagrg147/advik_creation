@@ -5,11 +5,13 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  previewProductModelImage,
   uploadProductImage,
   uploadProductImages,
   uploadProductMedia,
 } from '../api/products';
 import type { Product } from '../types';
+import { getPrimaryProductImage } from '../utils/productMedia';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,6 +21,7 @@ const Products = () => {
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'new-arrivals' | 'best-sellers' | 'unstitched'>('all');
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [previewingModel, setPreviewingModel] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -26,8 +29,8 @@ const Products = () => {
     price: '',
     priceBySize: {} as Record<string, string>,
     originalPrice: '',
-    category: '',
-    subcategory: '',
+    category: "Women's Wear",
+    subcategory: 'Kurta Sets',
     stockQuantity: '',
     inStock: true,
     newArrival: false,
@@ -37,8 +40,12 @@ const Products = () => {
     images: [] as string[],
     video: '',
     sizes: [] as string[],
+    autoGenerateModelImage: true,
+    aiModelPromptNotes: '',
   });
   const [uploading, setUploading] = useState(false);
+  const [previewModelImage, setPreviewModelImage] = useState('');
+  const [previewModelPrompt, setPreviewModelPrompt] = useState('');
 
   const fetchProducts = async () => {
     try {
@@ -75,8 +82,8 @@ const Products = () => {
       price: '',
       priceBySize: {} as Record<string, string>,
       originalPrice: '',
-      category: '',
-      subcategory: '',
+      category: "Women's Wear",
+      subcategory: 'Kurta Sets',
       stockQuantity: '',
       inStock: true,
       newArrival: false,
@@ -86,8 +93,12 @@ const Products = () => {
       images: [],
       video: '',
       sizes: ['S-36', 'M-38', 'L-40', 'XL-42'],
+      autoGenerateModelImage: true,
+      aiModelPromptNotes: '',
     });
     setShowModal(true);
+    setPreviewModelImage('');
+    setPreviewModelPrompt('');
   };
 
   const handleEdit = (product: Product) => {
@@ -114,8 +125,12 @@ const Products = () => {
       images: product.images || [],
       video: (product as Product & { video?: string }).video || '',
       sizes: product.sizes?.length ? [...product.sizes] : ['M-38', 'L-40', 'XL-42'],
+      autoGenerateModelImage: false,
+      aiModelPromptNotes: '',
     });
     setShowModal(true);
+    setPreviewModelImage(product.generatedModelImage || '');
+    setPreviewModelPrompt(product.generatedModelPrompt || '');
   };
 
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,6 +229,42 @@ const Products = () => {
     }
   };
 
+  const handlePreviewModel = async () => {
+    if (!formData.image) {
+      alert('Please add a main image before generating a preview.');
+      return;
+    }
+
+    setPreviewingModel(true);
+    try {
+      const priceBySize: Record<string, number> = {};
+      Object.entries(formData.priceBySize || {}).forEach(([size, val]) => {
+        const num = parseFloat(String(val));
+        if (!isNaN(num)) priceBySize[size] = num;
+      });
+
+      const preview = await previewProductModelImage({
+        name: formData.name,
+        description: formData.description,
+        price: formData.price ? parseFloat(formData.price) : 0,
+        priceBySize: Object.keys(priceBySize).length > 0 ? priceBySize : undefined,
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+        category: formData.category,
+        subcategory: formData.subcategory || undefined,
+        image: formData.image,
+        images: formData.images.length > 0 ? formData.images : undefined,
+        aiModelPromptNotes: formData.aiModelPromptNotes.trim() || undefined,
+      });
+
+      setPreviewModelImage(preview.imageUrl);
+      setPreviewModelPrompt(preview.prompt);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to generate preview');
+    } finally {
+      setPreviewingModel(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -257,13 +308,21 @@ const Products = () => {
         images: formData.images.length > 0 ? formData.images : undefined,
         video: formData.video || undefined,
         sizes: formData.unstitchedCollection ? (formData.sizes.length > 0 ? formData.sizes : []) : (formData.sizes.length > 0 ? formData.sizes : ['M-38', 'L-40', 'XL-42']),
+        autoGenerateModelImage: formData.autoGenerateModelImage,
+        aiModelPromptNotes: formData.aiModelPromptNotes.trim() || undefined,
       };
       if (editingProduct) {
         const updated = await updateProduct(editingProduct.id, payload);
         setProducts(products.map((p) => (p.id === editingProduct.id ? updated : p)));
+        if (updated.generatedModelStatus === 'failed' && updated.generatedModelError) {
+          alert(`Product updated, but AI model shot failed: ${updated.generatedModelError}`);
+        }
       } else {
         const created = await createProduct(payload);
         setProducts([created, ...products]);
+        if (created.generatedModelStatus === 'failed' && created.generatedModelError) {
+          alert(`Product created, but AI model shot failed: ${created.generatedModelError}`);
+        }
       }
       setShowModal(false);
     } catch (err) {
@@ -371,7 +430,7 @@ const Products = () => {
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Category</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sizes</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Labels</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
@@ -384,10 +443,15 @@ const Products = () => {
               {filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
                   <td className="px-4 sm:px-6 py-4">
-                    <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded" />
+                    <img src={getPrimaryProductImage(product)} alt={product.name} className="w-16 h-16 object-cover rounded" />
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <div className="text-sm font-medium text-gray-900 max-w-[180px] truncate">{product.name}</div>
+                    {product.generatedModelStatus && product.generatedModelStatus !== 'idle' && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        AI model: {product.generatedModelStatus === 'ready' ? 'Ready' : product.generatedModelStatus}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">{product.category}</td>
                   <td className="px-4 sm:px-6 py-4 text-sm text-gray-600">
@@ -448,7 +512,7 @@ const Products = () => {
         <div className="md:hidden divide-y divide-gray-100">
           {filteredProducts.map((product) => (
             <div key={product.id} className="p-4 flex gap-3">
-              <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded flex-shrink-0" />
+              <img src={getPrimaryProductImage(product)} alt={product.name} className="w-20 h-20 object-cover rounded flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
                 <p className="text-xs text-gray-500">{product.category}</p>
@@ -514,7 +578,7 @@ const Products = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Main Category</label>
                   <input
                     type="text"
                     value={formData.category}
@@ -523,7 +587,22 @@ const Products = () => {
                     placeholder="e.g. Women's Wear"
                     required
                   />
+                  <p className="mt-1 text-xs text-gray-500">Broad family this product belongs to.</p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
+                  <input
+                    type="text"
+                    value={formData.subcategory}
+                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="e.g. Kurta Sets"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Specific style inside the main category.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
                   <input
@@ -534,6 +613,7 @@ const Products = () => {
                     required
                   />
                 </div>
+                <div />
               </div>
 
               <div className={formData.unstitchedCollection ? 'opacity-75' : ''}>
@@ -690,6 +770,103 @@ const Products = () => {
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="autoGenerateModelImage"
+                      checked={formData.autoGenerateModelImage}
+                      onChange={(e) => setFormData({ ...formData, autoGenerateModelImage: e.target.checked })}
+                      className="mt-1 h-4 w-4"
+                    />
+                    <div className="flex-1">
+                      <label htmlFor="autoGenerateModelImage" className="block text-sm font-semibold text-gray-900">
+                        Auto-generate Indian model shot
+                      </label>
+                      <p className="mt-1 text-xs leading-5 text-gray-600">
+                        Uses the uploaded product images as reference and creates a premium model image for the storefront.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
+                      Optional AI styling notes
+                    </label>
+                    <textarea
+                      value={formData.aiModelPromptNotes}
+                      onChange={(e) => setFormData({ ...formData, aiModelPromptNotes: e.target.value })}
+                      placeholder="Example: premium festive mood, full-length pose, soft studio lighting"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handlePreviewModel}
+                      disabled={previewingModel || uploading}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:border-red-600 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {previewingModel ? 'Generating preview...' : 'Preview AI model shot'}
+                    </button>
+                    {previewModelImage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewModelImage('');
+                          setPreviewModelPrompt('');
+                        }}
+                        className="text-sm text-gray-500 transition hover:text-gray-800"
+                      >
+                        Clear preview
+                      </button>
+                    )}
+                  </div>
+                  {previewModelImage && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-[150px_1fr]">
+                      <img
+                        src={previewModelImage}
+                        alt="AI model preview"
+                        className="h-40 w-full rounded-lg object-cover"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Preview result</p>
+                        <p className="mt-2 text-xs leading-5 text-gray-600">
+                          This preview is generated before the product is saved. If you create the product with auto-generate enabled, a fresh saved version will be created and attached to the product.
+                        </p>
+                        {previewModelPrompt && (
+                          <p className="mt-2 line-clamp-6 text-xs leading-5 text-gray-500">
+                            Prompt: {previewModelPrompt}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {editingProduct?.generatedModelImage && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-[120px_1fr]">
+                      <img
+                        src={editingProduct.generatedModelImage}
+                        alt={`${editingProduct.name} AI model shot`}
+                        className="h-32 w-full rounded-lg object-cover"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Current AI model shot</p>
+                        <p className="mt-2 text-xs leading-5 text-gray-600">
+                          Status: <span className="font-semibold text-gray-900">{editingProduct.generatedModelStatus || 'ready'}</span>
+                        </p>
+                        {editingProduct.generatedModelError && (
+                          <p className="mt-2 text-xs leading-5 text-red-600">{editingProduct.generatedModelError}</p>
+                        )}
+                        {editingProduct.generatedModelPrompt && (
+                          <p className="mt-2 line-clamp-5 text-xs leading-5 text-gray-500">
+                            Prompt: {editingProduct.generatedModelPrompt}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

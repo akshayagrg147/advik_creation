@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/useCart';
 import { getProductPrice } from '../utils/price';
 import AnimatedSection from '../components/AnimatedSection';
+import { getPrimaryProductImage } from '../utils/productMedia';
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, getCartTotal } = useCart();
@@ -48,7 +49,7 @@ const Cart = () => {
                 className="bg-white border rounded-lg p-4 flex gap-4"
               >
               <img
-                src={item.product.image}
+                src={getPrimaryProductImage(item.product)}
                 alt={item.product.name}
                 className="w-24 h-24 object-cover rounded"
               />

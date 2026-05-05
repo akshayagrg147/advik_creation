@@ -19,6 +19,10 @@ export interface Product {
   bestSeller?: boolean;
   newArrival?: boolean;
   unstitchedCollection?: boolean;
+  generatedModelImage?: string;
+  generatedModelPrompt?: string;
+  generatedModelStatus?: 'idle' | 'generating' | 'ready' | 'failed';
+  generatedModelError?: string;
 }
 
 export interface CartItem {

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
 import { getProductPrice } from '../utils/price';
+import { getPrimaryProductImage } from '../utils/productMedia';
 
 interface Slide {
   id: number | string;
@@ -23,7 +24,7 @@ interface HeroSlideshowProps {
 }
 
 const getHeroProductScore = (product: Product) => {
-  const image = product.image.toLowerCase();
+  const image = getPrimaryProductImage(product).toLowerCase();
   const name = product.name.toLowerCase();
   const subcategory = product.subcategory?.toLowerCase() || '';
   let score = 0;
@@ -162,7 +163,7 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
                 to={`/product/${product.id}`}
                 className="min-w-0 h-36 overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-xl shadow-black/25"
               >
-                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                <img src={getPrimaryProductImage(product)} alt={product.name} className="h-full w-full object-cover" />
               </Link>
             ))}
           </div>
@@ -176,7 +177,7 @@ const HeroSlideshow = ({ slides, featuredProducts = [], autoPlayInterval = 5000 
             >
               <div className="flex gap-3">
                 <img
-                  src={featuredProduct.image}
+                  src={getPrimaryProductImage(featuredProduct)}
                   alt={featuredProduct.name}
                   className="h-20 w-16 rounded-md object-cover"
                 />

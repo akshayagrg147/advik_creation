@@ -16,9 +16,10 @@ import {
 } from '../api';
 import type { Product } from '../types';
 import type { HeroSlide, StoryItem } from '../api';
+import { getPrimaryProductImage } from '../utils/productMedia';
 
 const getHomeFeatureScore = (product: Product) => {
-  const image = product.image.toLowerCase();
+  const image = getPrimaryProductImage(product).toLowerCase();
   const subcategory = product.subcategory?.toLowerCase() || '';
   let score = 0;
 
@@ -322,7 +323,7 @@ const Home = () => {
                     className="group flex gap-3 rounded-lg border border-white/10 bg-white/[0.06] p-3 transition hover:-translate-y-0.5 hover:bg-white/[0.1]"
                   >
                     <img
-                      src={product.image}
+                      src={getPrimaryProductImage(product)}
                       alt={product.name}
                       className="h-24 w-20 shrink-0 rounded-md object-cover object-top"
                     />

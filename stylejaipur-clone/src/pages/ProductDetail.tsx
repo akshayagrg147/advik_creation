@@ -5,6 +5,7 @@ import { getProductById } from '../api';
 import { useCart } from '../context/useCart';
 import { getProductPrice } from '../utils/price';
 import type { Product } from '../types';
+import { getProductGallery } from '../utils/productMedia';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -115,7 +116,7 @@ const ProductDetail = () => {
     }
   };
 
-  const images = product.images?.length ? product.images : [product.image];
+  const images = getProductGallery(product);
 
   return (
     <div ref={contentRef} className="container mx-auto px-4 py-12">

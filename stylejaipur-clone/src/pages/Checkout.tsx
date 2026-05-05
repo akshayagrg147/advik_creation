@@ -6,6 +6,7 @@ import { createOrder } from '../api/orders';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../api/payments';
 import { getCheckoutSettings } from '../api/settings';
 import { getProductPrice } from '../utils/price';
+import { getPrimaryProductImage } from '../utils/productMedia';
 import AnimatedSection from '../components/AnimatedSection';
 import {
   isFirebasePhoneAuthConfigured,
@@ -352,7 +353,7 @@ const Checkout = () => {
         items: cart.map((item) => ({
           productId: item.product.id,
           productName: item.product.name,
-          productImage: item.product.image,
+          productImage: getPrimaryProductImage(item.product),
           size: item.size,
           quantity: item.quantity,
           price: getProductPrice(item.product, item.size),
@@ -739,7 +740,7 @@ const Checkout = () => {
             <div className="space-y-3 mb-6 max-h-48 overflow-y-auto">
               {cart.map((item) => (
                 <div key={`${item.product.id}-${item.size}`} className="flex gap-3">
-                  <img src={item.product.image} alt={item.product.name} className="w-14 h-14 object-cover rounded" />
+                  <img src={getPrimaryProductImage(item.product)} alt={item.product.name} className="w-14 h-14 object-cover rounded" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-800 truncate">{item.product.name}</p>
                     <p className="text-sm text-gray-500">Size: {item.size} × {item.quantity}</p>
