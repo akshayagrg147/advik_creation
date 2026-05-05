@@ -1,8 +1,10 @@
 import path from 'path';
+import sharp from 'sharp';
 import { uploadBufferToS3 } from './s3Upload.js';
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
 const DEFAULT_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+const isDallE2Model = DEFAULT_IMAGE_MODEL === 'dall-e-2';
 
 const getExtensionForType = (contentType = '') => {
   if (contentType.includes('png')) return '.png';
@@ -56,14 +58,33 @@ const fetchReferenceAsset = async (url, index) => {
   };
 };
 
+const prepareDallE2ReferenceAsset = async (asset) => {
+  const outputBuffer = await sharp(asset.buffer)
+    .rotate()
+    .resize(1024, 1024, {
+      fit: 'contain',
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
+    .png()
+    .toBuffer();
+
+  return {
+    buffer: outputBuffer,
+    contentType: 'image/png',
+    filename: 'reference.png',
+  };
+};
+
 const generateImageWithOpenAI = async ({ prompt, referenceAssets }) => {
   const formData = new FormData();
   formData.append('model', DEFAULT_IMAGE_MODEL);
   formData.append('prompt', prompt);
-  formData.append('size', '1024x1536');
+  formData.append('size', isDallE2Model ? '1024x1024' : '1024x1536');
   formData.append('response_format', 'b64_json');
 
-  referenceAssets.forEach((asset) => {
+  const assetsToSend = isDallE2Model ? referenceAssets.slice(0, 1) : referenceAssets;
+
+  assetsToSend.forEach((asset) => {
     formData.append(
       'image',
       new Blob([asset.buffer], { type: asset.contentType }),
@@ -119,9 +140,12 @@ export const generateProductModelImage = async (product, { promptNotes = '' } = 
   const referenceAssets = await Promise.all(
     referenceImageUrls.map((url, index) => fetchReferenceAsset(url, index))
   );
+  const preparedAssets = isDallE2Model
+    ? [await prepareDallE2ReferenceAsset(referenceAssets[0])]
+    : referenceAssets;
 
   const prompt = buildPrompt(product, promptNotes);
-  const generated = await generateImageWithOpenAI({ prompt, referenceAssets });
+  const generated = await generateImageWithOpenAI({ prompt, referenceAssets: preparedAssets });
   const extension = getExtensionForType(generated.contentType);
   const upload = await uploadBufferToS3(generated.buffer, 'images/generated-model/model', {
     contentType: generated.contentType,
