@@ -76,6 +76,18 @@ const prepareDallE2ReferenceAsset = async (asset) => {
   };
 };
 
+const createFullEditMask = async () =>
+  sharp({
+    create: {
+      width: 1024,
+      height: 1024,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .png()
+    .toBuffer();
+
 const generateImageWithOpenAI = async ({ prompt, referenceAssets }) => {
   const formData = new FormData();
   formData.append('model', DEFAULT_IMAGE_MODEL);
@@ -92,6 +104,11 @@ const generateImageWithOpenAI = async ({ prompt, referenceAssets }) => {
       asset.filename
     );
   });
+
+  if (isDallE2Model) {
+    const maskBuffer = await createFullEditMask();
+    formData.append('mask', new Blob([maskBuffer], { type: 'image/png' }), 'mask.png');
+  }
 
   const response = await fetch(`${OPENAI_API_BASE}/images/edits`, {
     method: 'POST',
